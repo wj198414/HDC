@@ -718,11 +718,11 @@ class HCI_HRS_Reduction():
             self.obs_st_at_removed.noise = self.obs_st_at_removed.noise / obs_norm
             #mask_arr = np.where((self.template_resample.flux / np.nanmedian(self.template_resample.flux)) > 0.99)
             mask_arr = np.where((self.template_resample.flux / np.nanmedian(self.template_resample.flux)) > 1e9)
-            #plt.errorbar(self.obs_st_at_removed.wavelength, self.obs_st_at_removed.flux, yerr=self.obs_st_at_removed.noise)
-            #plt.plot(self.template_resample.wavelength, self.template_resample.flux / np.median(self.template_resample.flux))
-            #plt.plot(self.template_resample.wavelength[mask_arr], self.template_resample.flux[mask_arr] / np.median(self.template_resample.flux[mask_arr]))
-            #plt.plot(self.obs_st_at_removed.wavelength[mask_arr], self.obs_st_at_removed.flux[mask_arr], "b.")
-            #plt.show()
+            plt.errorbar(self.obs_st_at_removed.wavelength, self.obs_st_at_removed.flux, yerr=self.obs_st_at_removed.noise)
+            plt.plot(self.template_resample.wavelength, self.template_resample.flux / np.median(self.template_resample.flux))
+            plt.plot(self.template_resample.wavelength[mask_arr], self.template_resample.flux[mask_arr] / np.median(self.template_resample.flux[mask_arr]))
+            plt.plot(self.obs_st_at_removed.wavelength[mask_arr], self.obs_st_at_removed.flux[mask_arr], "b.")
+            plt.show()
             if self.speckle_flag:
                 self.cutoff_value = self.hci_hrs_obs.instrument.spec_reso / 6.0
                 self.template_resample = self.template_resample.applyHighPassFilter(cutoff=self.cutoff_value)
@@ -735,11 +735,11 @@ class HCI_HRS_Reduction():
             result = self.simulateSingleMeasurement(ground_flag=False, plot_flag=False, speckle_flag=self.speckle_flag, spec_mask=mask_arr, long_array=False, speed_flag=False)
             print(result)
             self.writeLog(result)
-            #plt.plot(result["CCF"].vel, result["CCF"].ccf, "bo-")
-            #plt.plot(self.ccf_noise_less.vel, self.ccf_noise_less.ccf, "r")
-            #plt.show()
-            #plt.plot(result["CCF"].vel, result["CCF"].ccf - self.ccf_noise_less.ccf, "bo-")
-            #plt.show()            
+            plt.plot(result["CCF"].vel, result["CCF"].ccf, "bo-")
+            plt.plot(self.ccf_noise_less.vel, self.ccf_noise_less.ccf, "r")
+            plt.show()
+            plt.plot(result["CCF"].vel, result["CCF"].ccf - self.ccf_noise_less.ccf, "bo-")
+            plt.show()            
             #result = self.simulateMultiMeasurement(num_sim=100, ground_flag=False, speckle_flag=self.speckle_flag, spec_mask=mask_arr, long_array=False, speed_flag=True)
             result = self.simulateMultiMeasurement_2(num_sim=100, ground_flag=False, speckle_flag=self.speckle_flag, spec_mask=mask_arr, long_array=False, speed_flag=False)
 
@@ -958,8 +958,8 @@ def __main__():
     #initDict = readInit(init_file="MdwarfPlanet.init")
     initDict = readInit(init_file="SunEarth_4m.init")
     wav_min, wav_max, t_exp = np.float32(initDict["wav_min"]), np.float32(initDict["wav_max"]), np.float32(initDict["t_exp"])
-    target_pl = Target(distance=np.float32(initDict["distance"]), spec_path=initDict["pl_spec_path"]+".102400", inclination_deg=np.float32(initDict["pl_inclination_deg"]), rotation_vel=np.float32(initDict["pl_rotation_vel"]), radial_vel=np.float32(initDict["pl_radial_vel"]), spec_reso=np.float32(initDict["spec_reso"]))
-    target_st = Target(distance=np.float32(initDict["distance"]), spec_path=initDict["st_spec_path"]+".102400", inclination_deg=np.float32(initDict["st_inclination_deg"]), rotation_vel=np.float32(initDict["st_rotation_vel"]), radial_vel=np.float32(initDict["st_radial_vel"]), spec_reso=np.float32(initDict["spec_reso"]))
+    target_pl = Target(distance=np.float32(initDict["distance"]), spec_path=initDict["pl_spec_path"], inclination_deg=np.float32(initDict["pl_inclination_deg"]), rotation_vel=np.float32(initDict["pl_rotation_vel"]), radial_vel=np.float32(initDict["pl_radial_vel"]), spec_reso=np.float32(initDict["spec_reso"]))
+    target_st = Target(distance=np.float32(initDict["distance"]), spec_path=initDict["st_spec_path"], inclination_deg=np.float32(initDict["st_inclination_deg"]), rotation_vel=np.float32(initDict["st_rotation_vel"]), radial_vel=np.float32(initDict["st_radial_vel"]), spec_reso=np.float32(initDict["spec_reso"]))
     wav_med = (wav_min + wav_max) / 2.0
     if initDict["spec_tran_path"] != "None":
         atmosphere = Atmosphere(spec_tran_path=initDict["spec_tran_path"], spec_radi_path=initDict["spec_radi_path"])
@@ -968,7 +968,7 @@ def __main__():
     instrument = Instrument(wav_med, telescope_size=np.float32(initDict["telescope_size"]), pl_st_contrast=np.float32(initDict["pl_st_contrast"]), spec_reso=np.float32(initDict["spec_reso"]), read_noise=np.float32(initDict["read_noise"]), dark_current=np.float32(initDict["dark_current"]), fiber_size=np.float32(initDict["fiber_size"]), pixel_sampling=np.float32(initDict["pixel_sampling"]), throughput=np.float32(initDict["throughput"]), wfc_residual=np.float32(initDict["wfc_residual"]))
     hci_hrs = HCI_HRS_Observation(wav_min, wav_max, t_exp, target_pl, target_st, instrument, atmosphere=atmosphere)
     print("Star flux: {0} \nLeaked star flux: {1}\nPlanet flux: {2}\nPlanet flux per pixel: {3}\nSky flux: {4}\nSky transmission: {5}".format(hci_hrs.star_total_flux, hci_hrs.star_total_flux * instrument.pl_st_contrast, hci_hrs.planet_total_flux, hci_hrs.planet_total_flux / (len(hci_hrs.obs_spec_resample.flux) + 0.0), hci_hrs.sky_total_flux, hci_hrs.sky_transmission))
-    spec = pyfits.open(initDict["template_path"]+".102400")
+    spec = pyfits.open(initDict["template_path"])
     template = Spectrum(spec[1].data["Wavelength"], spec[1].data["Flux"], spec_reso=np.float32(initDict["spec_reso"]))
     hci_hrs_red = HCI_HRS_Reduction(hci_hrs, template, save_flag=False, obj_tag=initDict["obj_tag"], template_tag=initDict["template_tag"],speckle_flag=True)
 
