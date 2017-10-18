@@ -48,12 +48,20 @@ class HCI_HRS_Observation():
    
         spec_therm = self.getSpecChunk(self.thermbg.wavelength, self.thermbg.flux)
         self.therm_spec_chunk = Spectrum(spec_therm["Wavelength"], spec_therm["Flux"], spec_reso=self.thermbg.spec_reso)
+
+        plt.figure()
+        plt.plot(self.therm_spec_chunk.wavelength, self.therm_spec_chunk.flux)
+
         self.therm_spec_chunk = self.removeNanInSpecChunk(self.therm_spec_chunk)
         self.therm_spec_chunk.flux = self.thermToPhoton(self.therm_spec_chunk.wavelength, self.therm_spec_chunk.flux, self.t_exp)
         self.therm_spec_chunk.wavelength = self.therm_spec_chunk.wavelength[1:]
         self.therm_total_flux = self.getTotalFlux(self.therm_spec_chunk.flux)
         self.therm_spec_chunk.resampleSpec(self.star_spec_chunk.wavelength)
 
+        plt.figure()
+        plt.plot(self.therm_spec_chunk.wavelength, self.therm_spec_chunk.flux)
+        plt.show(block=False)
+        
         #Get exozodiacal spectrum within wavelength range, calculate total zodi flux, and resample to stellar wavelength scale
 
         spec_zodi = self.getSpecChunk(self.zodi.wavelength, self.zodi.flux)
@@ -191,6 +199,7 @@ class HCI_HRS_Observation():
             plt.plot(self.obs_pl_resample.wavelength, self.obs_pl_resample.flux, "orange")
             plt.plot(self.obs_therm_resample.wavelength, self.obs_therm_resample.flux, "g")
             plt.plot(self.obs_zodi_resample.wavelength, self.obs_zodi_resample.flux, "r")
+            plt.show(block=False)
 
             # construct spectrum with planet, star, and thermal background 
             # obs = (planet + star * contrast + thermbg) 

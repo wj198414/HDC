@@ -1,5 +1,11 @@
 hci_hrs_sim.py changelog
 
+10/17/17:
+
+Carl Coker
+
+-Changed plt.show() calls to plt.show(block=False)
+
 10/16/17:
 
 Carl Coker (ccoker67@gmail.com, carl.t.coker@jpl.nasa.gov)
