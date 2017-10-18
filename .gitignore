@@ -1,10 +1,5 @@
 
 *.pyc
-modern_cube_zodi1inc60dist10_1.32-1.63um.fits
-hci.sh
 *.dat
-*.dat
-multi_sim_log.dat
-log.dat
-log.dat
 *.init
+*.fits
