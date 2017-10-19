@@ -1,5 +1,11 @@
 hci_hrs_sim.py changelog
 
+10/18/17:
+
+Carl Coker
+
+-Fixed bug in distance scaling of exozodi
+
 10/17/17:
 
 Carl Coker
