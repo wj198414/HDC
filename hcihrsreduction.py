@@ -47,9 +47,11 @@ class HCI_HRS_Reduction():
             self.obs_st_at_removed = self.removeSkyTransmissionStar()            
             #obs_norm = self.obs_st_at_removed.getSpecNorm(num_chunks=20, poly_order=3)
             print(str(datetime.now()))
-            #obs_norm = self.getStarNorm(self.hci_hrs_obs.obs_st_resample.flux, long_array=True)
-            #obs_norm = obs_norm.value / np.median(obs_norm.value) * np.median(self.obs_st_at_removed.flux)
-            obs_norm = np.median(self.obs_st_at_removed.flux)
+            #Normalization is to make sure that the input spectrum for the CCF is flat; 
+            #this is especially important for large wavelength coverage.
+            obs_norm = self.getStarNorm(self.hci_hrs_obs.obs_st_resample.flux, long_array=True)
+            obs_norm = obs_norm.value / np.median(obs_norm.value) * np.median(self.obs_st_at_removed.flux)
+            #obs_norm = np.median(self.obs_st_at_removed.flux) 
             self.obs_st_at_removed.flux = self.obs_st_at_removed.flux / obs_norm
             self.obs_st_at_removed.noise = self.obs_st_at_removed.noise / obs_norm
             #mask_arr = np.where((self.template_resample.flux / np.nanmedian(self.template_resample.flux)) > 0.99)
@@ -60,7 +62,7 @@ class HCI_HRS_Reduction():
             #plt.plot(self.template_resample.wavelength, self.template_resample.flux / np.median(self.template_resample.flux))
             plt.plot(self.template_resample.wavelength[mask_arr], self.template_resample.flux[mask_arr] / np.median(self.template_resample.flux[mask_arr]))
             plt.plot(self.obs_st_at_removed.wavelength[mask_arr], self.obs_st_at_removed.flux[mask_arr], "b.")
-            plt.show()
+            plt.show(block=False)
             if self.speckle_flag:
                 self.cutoff_value = self.hci_hrs_obs.instrument.spec_reso / 6.0
                 self.template_resample = self.template_resample.applyHighPassFilter(cutoff=self.cutoff_value)
@@ -76,10 +78,9 @@ class HCI_HRS_Reduction():
             plt.figure()
             plt.plot(result["CCF"].vel, result["CCF"].ccf, "bo-")
             plt.plot(self.ccf_noise_less.vel, self.ccf_noise_less.ccf, "r")
-            plt.show()
             plt.figure()
             plt.plot(result["CCF"].vel, result["CCF"].ccf - self.ccf_noise_less.ccf, "bo-")
-            plt.show()            
+            plt.show(block=False)
             #result = self.simulateMultiMeasurement(num_sim=100, ground_flag=False, speckle_flag=self.speckle_flag, spec_mask=mask_arr, long_array=False, speed_flag=True)
             result = self.simulateMultiMeasurement_2(num_sim=100, ground_flag=False, speckle_flag=self.speckle_flag, spec_mask=mask_arr, long_array=False, speed_flag=False)
 
@@ -142,7 +143,6 @@ class HCI_HRS_Reduction():
         if plot_flag:
             plt.plot(self.obs_st_at_removed.wavelength, self.obs_st_at_removed.flux)
             plt.plot(spec.wavelength, spec.flux)
-            plt.show()
         vel_pixel = scipy.constants.c / self.hci_hrs_obs.instrument.spec_reso / self.hci_hrs_obs.instrument.pixel_sampling
         ccf = ccf.getCCFchunk(vmin=-50*vel_pixel, vmax=50*vel_pixel)
 
@@ -265,6 +265,7 @@ class HCI_HRS_Reduction():
         flx_obs_st_at_removed = self.obs_st_at_removed.flux
         wav_obs = self.hci_hrs_obs.obs_spec_resample.wavelength
         wav_template = self.template.wavelength
+        plt.figure()
         if plotTemplate:
             plt.plot(wav_template, flx_template / np.median(flx_template), label="Template")
         if plotStAtm:
@@ -277,7 +278,7 @@ class HCI_HRS_Reduction():
             plt.plot(wav_obs, flx_obs_st_at_removed / np.median(flx_obs_st_at_removed), label="Sky Star removed")
         plt.ylim(np.min(flx_st_atm / np.median(flx_st_atm)), 2.0 * np.max(flx_st_atm / np.median(flx_st_atm)))
         plt.legend()
-        plt.show()
+        plt.show(block=False)
 
     def getSpecChunk(self, wav, flx):
         # get spectrum within wavelength range

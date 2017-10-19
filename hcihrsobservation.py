@@ -53,7 +53,7 @@ class HCI_HRS_Observation():
         self.therm_spec_chunk.wavelength = self.therm_spec_chunk.wavelength[1:]
         self.therm_total_flux = self.getTotalFlux(self.therm_spec_chunk.flux)
         self.therm_spec_chunk.resampleSpec(self.star_spec_chunk.wavelength)
-
+        
         #Get exozodiacal spectrum within wavelength range, calculate total zodi flux, and resample to stellar wavelength scale
 
         spec_zodi = self.getSpecChunk(self.zodi.wavelength, self.zodi.flux)
@@ -191,6 +191,7 @@ class HCI_HRS_Observation():
             plt.plot(self.obs_pl_resample.wavelength, self.obs_pl_resample.flux, "orange")
             plt.plot(self.obs_therm_resample.wavelength, self.obs_therm_resample.flux, "g")
             plt.plot(self.obs_zodi_resample.wavelength, self.obs_zodi_resample.flux, "r")
+            plt.show(block=False)
 
             # construct spectrum with planet, star, and thermal background 
             # obs = (planet + star * contrast + thermbg) 

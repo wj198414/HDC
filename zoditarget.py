@@ -49,7 +49,7 @@ class ZodiTarget():
 
         #Scale the exozodi brightness to the proper distance and total exozodi level; 
         #the Haystacks model is the Solar System at 10 pc
-        zodi_per_pix = np.array(zodi_per_pix) * (self.distance/self.spec_header["DIST"])**2 * self.exozodi_level
+        zodi_per_pix = np.array(zodi_per_pix) * (self.spec_header["DIST"]/self.distance)**2 * self.exozodi_level
 
         wavelcol = pyfits.Column(name="Wavelength", array=wavel, format="E", unit="um")
         fluxcol = pyfits.Column(name="Flux", array=zodi_per_pix, format="E", unit="Jy")
