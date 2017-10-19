@@ -1,0 +1,5 @@
+
+*.pyc
+*.dat
+*.fits
+*.init
