@@ -67,6 +67,7 @@ class HCI_HRS_Observation():
         spec_zodi = self.getSpecChunk(self.zodi.wavelength, self.zodi.flux)
         self.zodi_spec_chunk = Spectrum(spec_zodi["Wavelength"], spec_zodi["Flux"], spec_reso=self.zodi.spec_reso)
         self.zodi_spec_chunk = self.removeNanInSpecChunk(self.zodi_spec_chunk)
+        self.zodi_spec_chunk.evenSampling()
         self.zodi_spec_chunk.flux = self.zodiToPhoton(self.zodi_spec_chunk.wavelength, self.zodi_spec_chunk.flux, self.instrument.telescope_size, self.instrument.throughput, self.t_exp)
         self.zodi_spec_chunk.wavelength = self.zodi_spec_chunk.wavelength[1:]
         self.zodi_total_flux = self.getTotalFlux(self.zodi_spec_chunk.flux)
