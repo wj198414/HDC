@@ -55,21 +55,16 @@ class ZodiTarget():
                 zodi_per_pix.append(np.sum(haystacks[i+1].data[planetcen[0]-N_pix[i]:planetcen[0]+N_pix[i]+1, 
                                                                planetcen[1]-N_pix[i]:planetcen[1]+N_pix[i]+1]))
 
-        wavel = np.array(wavel).ravel()                                               
         #Scale the exozodi brightness to the proper distance and total exozodi level; 
         #the Haystacks model is the Solar System at 10 pc
-<<<<<<< HEAD
-        zodi_per_pix = np.array(zodi_per_pix) * (self.distance/scale_distance)**2 * self.exozodi_level
+        zodi_per_pix = np.array(zodi_per_pix) * (scale_distance/self.distance)**2 * self.exozodi_level
         
         #Ensure that the data are ordered by wavelength
+        wavel = np.array(wavel).ravel()                                               
         wavel_order = np.argsort(wavel)
         wavel = wavel[wavel_order]
         zodi_per_pix = zodi_per_pix[wavel_order]
         
-=======
-        zodi_per_pix = np.array(zodi_per_pix) * (self.spec_header["DIST"]/self.distance)**2 * self.exozodi_level
-
->>>>>>> bf847dd893f1345539acac5404c87b2e89901974
         wavelcol = pyfits.Column(name="Wavelength", array=wavel, format="E", unit="um")
         fluxcol = pyfits.Column(name="Flux", array=zodi_per_pix, format="E", unit="Jy")
         zodihdu = pyfits.BinTableHDU.from_columns([wavelcol, fluxcol])

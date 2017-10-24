@@ -51,7 +51,6 @@ class HCI_HRS_Reduction():
             #this is especially important for large wavelength coverage.
             obs_norm = self.getStarNorm(self.hci_hrs_obs.obs_st_resample.flux, long_array=True)
             obs_norm = obs_norm.value / np.median(obs_norm.value) * np.median(self.obs_st_at_removed.flux)
-            #obs_norm = np.median(self.obs_st_at_removed.flux) 
             self.obs_st_at_removed.flux = self.obs_st_at_removed.flux / obs_norm
             self.obs_st_at_removed.noise = self.obs_st_at_removed.noise / obs_norm
             #mask_arr = np.where((self.template_resample.flux / np.nanmedian(self.template_resample.flux)) > 0.99)
