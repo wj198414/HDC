@@ -1,5 +1,6 @@
 hci_hrs_sim.py changelog
 
+<<<<<<< HEAD
 10/24/17:
 
 Carl Coker
@@ -7,6 +8,13 @@ Carl Coker
 -Distance units in ZodiTarget now correct, fixing calculation of N_pix
 -Added code to automatically iterate over all Haystacks cubes present
     -Fixing some sampling issues now
+=======
+10/18/17:
+
+Carl Coker
+
+-Fixed bug in distance scaling of exozodi
+>>>>>>> bf847dd893f1345539acac5404c87b2e89901974
 
 10/17/17:
 
