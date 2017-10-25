@@ -56,12 +56,12 @@ class HCI_HRS_Reduction():
             #mask_arr = np.where((self.template_resample.flux / np.nanmedian(self.template_resample.flux)) > 0.99)
             mask_arr = np.where((self.template_resample.flux / np.nanmedian(self.template_resample.flux)) > 1e9)
             #plt.errorbar(self.obs_st_at_removed.wavelength, self.obs_st_at_removed.flux, yerr=self.obs_st_at_removed.noise)
-            '''plt.figure()
+            plt.figure()
             plt.errorbar(self.obs_st_at_removed.wavelength, self.obs_st_at_removed.flux, self.obs_st_at_removed.noise)
             #plt.plot(self.template_resample.wavelength, self.template_resample.flux / np.median(self.template_resample.flux))
             plt.plot(self.template_resample.wavelength[mask_arr], self.template_resample.flux[mask_arr] / np.median(self.template_resample.flux[mask_arr]))
             plt.plot(self.obs_st_at_removed.wavelength[mask_arr], self.obs_st_at_removed.flux[mask_arr], "b.")
-            plt.show(block=False)'''
+            plt.show(block=False)
             if self.speckle_flag:
                 self.cutoff_value = self.hci_hrs_obs.instrument.spec_reso / 6.0
                 self.template_resample = self.template_resample.applyHighPassFilter(cutoff=self.cutoff_value)
@@ -74,12 +74,12 @@ class HCI_HRS_Reduction():
             result = self.simulateSingleMeasurement(ground_flag=False, plot_flag=False, speckle_flag=self.speckle_flag, spec_mask=mask_arr, long_array=False, speed_flag=False)
             print(result)
             self.writeLog(result)
-            '''plt.figure()
+            plt.figure()
             plt.plot(result["CCF"].vel, result["CCF"].ccf, "bo-")
             plt.plot(self.ccf_noise_less.vel, self.ccf_noise_less.ccf, "r")
             plt.figure()
             plt.plot(result["CCF"].vel, result["CCF"].ccf - self.ccf_noise_less.ccf, "bo-")
-            plt.show(block=False)'''
+            plt.show(block=False)
             #result = self.simulateMultiMeasurement(num_sim=100, ground_flag=False, speckle_flag=self.speckle_flag, spec_mask=mask_arr, long_array=False, speed_flag=True)
             result = self.simulateMultiMeasurement_2(num_sim=100, ground_flag=False, speckle_flag=self.speckle_flag, spec_mask=mask_arr, long_array=False, speed_flag=False)
 

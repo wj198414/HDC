@@ -49,6 +49,7 @@ class HCI_HRS_Observation():
         spec_therm = self.getSpecChunk(self.thermbg.wavelength, self.thermbg.flux)
         self.therm_spec_chunk = Spectrum(spec_therm["Wavelength"], spec_therm["Flux"], spec_reso=self.thermbg.spec_reso)
         self.therm_spec_chunk = self.removeNanInSpecChunk(self.therm_spec_chunk)
+        #self.therm_spec_chunk.evenSampling()
         self.therm_spec_chunk.flux = self.thermToPhoton(self.therm_spec_chunk.wavelength, self.therm_spec_chunk.flux, self.t_exp)
         self.therm_spec_chunk.wavelength = self.therm_spec_chunk.wavelength[1:]
         self.therm_total_flux = self.getTotalFlux(self.therm_spec_chunk.flux)
@@ -187,12 +188,12 @@ class HCI_HRS_Observation():
             self.obs_zodi_resample = self.obs_zodi.resampleSpectoSpectrograph(pixel_sampling=self.instrument.pixel_sampling)
             self.obs_zodi_resample.scaleSpec(total_flux=self.zodi_total_flux)
 
-            '''plt.figure()
+            plt.figure()
             plt.plot(self.obs_st_resample.wavelength, self.obs_st_resample.flux*self.instrument.pl_st_contrast, "b")
             plt.plot(self.obs_pl_resample.wavelength, self.obs_pl_resample.flux, "orange")
             plt.plot(self.obs_therm_resample.wavelength, self.obs_therm_resample.flux, "g")
             plt.plot(self.obs_zodi_resample.wavelength, self.obs_zodi_resample.flux, "r")
-            plt.show(block=False)'''
+            plt.show(block=False)
 
             # construct spectrum with planet, star, and thermal background 
             # obs = (planet + star * contrast + thermbg) 

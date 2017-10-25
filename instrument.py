@@ -35,13 +35,16 @@ class Instrument():
 
     def calcThermBackground(self):
 
-        gold_refrac_data = np.genfromtxt("goldrefrac.txt", dtype=float) #Complex refractive index data (n+i*k) for gold.  Columns are:  0:  wavel in um; 1: n; 2: k.
+        #Complex refractive index data (n+i*k) for gold.  
+        #Columns are:  0:  wavel in um; 1: n; 2: k.
+        gold_refrac_data = np.genfromtxt("goldrefrac.txt", dtype=float)
 
         wavelidx = 0
         nidx = 1
         kidx = 2
 
-        #Assume normal incidence for all light.  Not necessarily true, but good enough for an estimate.  Any deviation from normal incidence only lowers the background, in any case.
+        #Assume normal incidence for all light.  Not necessarily true, but good enough for an estimate.  
+        #Any deviation from normal incidence only lowers the background, in any case.
         gold_norm_reflec = np.abs((1.-(gold_refrac_data[:,nidx]+1j*gold_refrac_data[:,kidx]))/\
                           (1.+gold_refrac_data[:,nidx]+1j*gold_refrac_data[:,kidx]))**2.
 

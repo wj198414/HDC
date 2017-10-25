@@ -40,7 +40,7 @@ def __main__():
     template = Spectrum(spec[1].data["Wavelength"], spec[1].data["Flux"], spec_reso=np.float32(initDict["spec_reso"]))
     hci_hrs_red = HCI_HRS_Reduction(hci_hrs, template, save_flag=False, obj_tag=initDict["obj_tag"], template_tag=initDict["template_tag"],speckle_flag=True)
 
-#__main__()
+__main__()
 
 
 

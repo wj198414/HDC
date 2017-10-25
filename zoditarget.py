@@ -35,7 +35,7 @@ class ZodiTarget():
         zodi_per_pix = []
                 
         for zodicube in sorted(os.listdir(self.spec_path)):
-            #print self.spec_path+"/"+zodicube
+            
             haystacks = pyfits.open(self.spec_path+"/"+zodicube)
 
             N_EXT = haystacks[0].header['N_EXT']
