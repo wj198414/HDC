@@ -48,9 +48,8 @@ class ZodiTarget():
             #in the instrument
 
             N_pix = np.array(np.ceil((wavel_temp*u.um*self.distance*u.pc/(self.instrument.telescope_size*u.m*pixel_scale)).decompose()/2)).astype(int)
-        
-            #Sum up the zodi at each wavelength
-            
+
+            #Sum up the zodi at each wavelength            
             for i in range(N_EXT):
                 zodi_per_pix.append(np.sum(haystacks[i+1].data[planetcen[0]-N_pix[i]:planetcen[0]+N_pix[i]+1, 
                                                                planetcen[1]-N_pix[i]:planetcen[1]+N_pix[i]+1]))
@@ -58,7 +57,6 @@ class ZodiTarget():
         #Scale the exozodi brightness to the proper distance and total exozodi level; 
         #the Haystacks model is the Solar System at 10 pc
         zodi_per_pix = np.array(zodi_per_pix) * (scale_distance/self.distance)**2 * self.exozodi_level
-        
         #Ensure that the data are ordered by wavelength
         wavel = np.array(wavel).ravel()                                               
         wavel_order = np.argsort(wavel)
