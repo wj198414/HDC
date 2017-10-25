@@ -37,6 +37,7 @@ plt.plot(texp_vals, ccf_snr_vs_texp)
 plt.show(block=False)'''
 
 xx, yy = np.meshgrid(relevant_points[-6:, contrast_col], np.unique(relevant_points[:, res_col]))
+
 zz = relevant_points[:, ccf_sd_col]
 #zz = relevant_points[:, ccf_snr_col] - relevant_points[:, ccf_sd_col]
 zz = zz.reshape((10,6))
@@ -47,3 +48,15 @@ plt.colorbar(im)
 plt.xscale("log")
 plt.yscale("log")
 plt.show()
+
+#zz = relevant_points[:, ccf_sd_col]
+zz = relevant_points[:, ccf_snr_col] - relevant_points[:, ccf_sd_col]
+zz = zz.reshape((10,6))
+
+plt.figure()
+im = plt.pcolor(xx, yy, zz, cmap=plt.cm.Blues, vmin=0, vmax=3)
+plt.colorbar(im)
+plt.xscale("log")
+plt.yscale("log")
+plt.show(block=False)
+
