@@ -49,7 +49,7 @@ class HCI_HRS_Observation():
         spec_therm = self.getSpecChunk(self.thermbg.wavelength, self.thermbg.flux)
         self.therm_spec_chunk = Spectrum(spec_therm["Wavelength"], spec_therm["Flux"], spec_reso=self.thermbg.spec_reso)
         self.therm_spec_chunk = self.removeNanInSpecChunk(self.therm_spec_chunk)
-        #self.therm_spec_chunk.evenSampling()
+        self.therm_spec_chunk.evenSampling()
         self.therm_spec_chunk.flux = self.thermToPhoton(self.therm_spec_chunk.wavelength, self.therm_spec_chunk.flux, self.t_exp)
         self.therm_spec_chunk.wavelength = self.therm_spec_chunk.wavelength[1:]
         self.therm_total_flux = self.getTotalFlux(self.therm_spec_chunk.flux)
