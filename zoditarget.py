@@ -3,6 +3,7 @@ import astropy.io.fits as pyfits
 import astropy.units as u
 import os
 from spectrum import Spectrum
+from scipy import interpolate
 
 #This class carries the exozodiacal background for the observation.  The relevant portions of the interface are the same as for Target().
 
@@ -44,15 +45,14 @@ class ZodiTarget():
             pixel_scale = haystacks[0].header['PIXSCALE'] * u.au  #Pixel scale of the simulation, in AU/pix
             scale_distance = haystacks[0].header["DIST"] #This is needed later on outside the loop
         
-            #Half the number of zodi sim pixels on a side that fit into one diffraction-limited pixel
-            #in the instrument
+            #Make a circular aperture corresponding to a lambda/D sized planet PSF
+            pix_rad = np.array((wavel_temp*u.um*self.distance*u.pc/(self.instrument.telescope_size*u.m*pixel_scale)).decompose()/2)
+            yy, xx = np.mgrid[:haystacks[1].data.shape[0], :haystacks[1].data.shape[1]]
+            circle = (xx - planetcen[1])**2. + (yy - planetcen[0])**2.
 
-            N_pix = np.array(np.ceil((wavel_temp*u.um*self.distance*u.pc/(self.instrument.telescope_size*u.m*pixel_scale)).decompose()/2)).astype(int)
-
-            #Sum up the zodi at each wavelength            
+            #Sum up the zodi inside the planet PSF at each wavelength
             for i in range(N_EXT):
-                zodi_per_pix.append(np.sum(haystacks[i+1].data[planetcen[0]-N_pix[i]:planetcen[0]+N_pix[i]+1, 
-                                                               planetcen[1]-N_pix[i]:planetcen[1]+N_pix[i]+1]))
+                zodi_per_pix.append(np.sum(haystacks[i+1].data[circle < pix_rad[i]**2.]))
 
         #Scale the exozodi brightness to the proper distance and total exozodi level; 
         #the Haystacks model is the Solar System at 10 pc
