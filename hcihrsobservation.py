@@ -76,11 +76,13 @@ class HCI_HRS_Observation():
             spec_atm_radi = self.getSpecChunk(self.atmosphere.spec_radi_wav, self.atmosphere.spec_radi_flx)
             self.atm_radi_spec_chunk = Spectrum(spec_atm_radi["Wavelength"], spec_atm_radi["Flux"], spec_reso=self.star.spec_reso)
             self.atm_radi_spec_chunk = self.removeNanInSpecChunk(self.atm_radi_spec_chunk)
+            self.atm_radi_spec_chunk.evenSampling()
             # calculate total flux from sky emission
             self.sky_total_flux = self.atmosphere.getTotalSkyFlux(self.wav_min, self.wav_max, tel_size=self.instrument.telescope_size, multiple_lambda_D=self.instrument.fiber_size, t_exp=self.t_exp, eta_ins=self.instrument.throughput)
             # resample transmission and emission spectra to star wavelength scale
             self.atm_tran_spec_chunk.resampleSpec(self.star_spec_chunk.wavelength)
-            self.atm_radi_spec_chunk.resampleSpec(self.star_spec_chunk.wavelength) 
+            self.atm_radi_spec_chunk.resampleSpec(self.star_spec_chunk.wavelength)
+
             # doppler shift and rotationally broaden planet and star spectra
             self.planet_spec_chunk.dopplerShift(rv_shift=self.planet.radial_vel)
             #self.planet_spec_chunk.rotational_blur(rot_vel=self.planet.rotation_vel)
@@ -89,9 +91,9 @@ class HCI_HRS_Observation():
             # doppler shift transmission and emission spectra
             self.atm_tran_spec_chunk.dopplerShift(rv_shift=self.atmosphere.radial_vel)
             self.atm_radi_spec_chunk.dopplerShift(rv_shift=self.atmosphere.radial_vel)  
+
             # calculate sky transmission rate
             self.sky_transmission = np.sum(self.atm_tran_spec_chunk.flux) / (0.0 + len(self.atm_tran_spec_chunk.flux))
-
 
             # construct spectrum with planet, star and atmospheric transmission
             # pl_st spectrum = (planet + star * contrast) * transmission 
@@ -104,6 +106,15 @@ class HCI_HRS_Observation():
             # pl_st spectrum is scaled by total flux from the star and the planet and the atmosphere transmission
             self.obs_pl_st_resample.scaleSpec(total_flux=self.sky_transmission * (self.planet_total_flux + self.star_total_flux * self.instrument.pl_st_contrast))
 
+            # construct spectrum of atmospheric transmission only
+            # atm spectrum = transmission 
+            # atm spectrum is then spectrally blurred and resampled to spectrograph wavelength grid
+            obs_spec_wav = self.star_spec_chunk.wavelength
+            obs_spec_atm_tran = self.atm_tran_spec_chunk.flux
+            self.obs_atm_tran = Spectrum(obs_spec_wav, obs_spec_atm_tran, spec_reso=self.star.spec_reso)
+            self.obs_atm_tran.spectral_blur(rpower=self.star.spec_reso)
+            self.obs_atm_tran_resample = self.obs_atm_tran.resampleSpectoSpectrograph(pixel_sampling=self.instrument.pixel_sampling)
+
             # construct spectrum with star and atmospheric transmission
             # st spectrum = star * transmission 
             # st spectrum is then spectrally blurred and resampled to spectrograph wavelength grid
@@ -115,7 +126,7 @@ class HCI_HRS_Observation():
             # st spectrum is scaled by total flux from the star and the atmosphere transmission
             self.obs_st_resample.scaleSpec(total_flux=self.sky_transmission * self.star_total_flux)
 
-            # construct spectrum with planet and atmospheric transmission
+            # construct spectrum with planet 
             # pl spectrum = planet  
             # pl spectrum is then spectrally blurred and resampled to spectrograph wavelength grid
             obs_spec_wav = self.star_spec_chunk.wavelength
@@ -130,8 +141,35 @@ class HCI_HRS_Observation():
             self.atm_radi_spec_chunk.spectral_blur(rpower=self.star.spec_reso)
             self.atm_radi_spec_chunk_resample = self.atm_radi_spec_chunk.resampleSpectoSpectrograph(pixel_sampling=self.instrument.pixel_sampling)
             self.atm_radi_spec_chunk_resample.scaleSpec(total_flux=self.sky_total_flux)
+
+            #Construct thermal background spectrum
+            #Thermal spectrum = thermbg
+            #Thermal spectrum is then spectrally blurred and resampled to spectrograph wavelength grid
+
+            self.obs_therm = self.therm_spec_chunk.copy()
+            self.obs_therm.spectral_blur(rpower=self.thermbg.spec_reso, quick_blur=False)
+            self.obs_therm_resample = self.obs_therm.resampleSpectoSpectrograph(pixel_sampling=self.instrument.pixel_sampling)
+            self.obs_therm_resample.scaleSpec(total_flux=self.therm_total_flux)
+
+            self.obs_zodi = self.zodi_spec_chunk.copy()
+            self.obs_zodi.spectral_blur(rpower=self.zodi.spec_reso, quick_blur=False)
+            self.obs_zodi_resample = self.obs_zodi.resampleSpectoSpectrograph(pixel_sampling=self.instrument.pixel_sampling)
+            self.obs_zodi_resample.scaleSpec(total_flux=self.zodi_total_flux)
+
             # construct final spectrum with pl_st and radi
-            self.obs_spec_resample = Spectrum(self.atm_radi_spec_chunk_resample.wavelength, self.atm_radi_spec_chunk_resample.flux + self.obs_pl_st_resample.flux, spec_reso=self.star.spec_reso)
+            self.obs_spec_resample = Spectrum(self.atm_radi_spec_chunk_resample.wavelength, self.atm_radi_spec_chunk_resample.flux + self.obs_pl_st_resample.flux + self.obs_zodi_resample.flux + self.obs_therm_resample.flux, spec_reso=self.star.spec_reso)
+
+            if 1 == 1:
+		plt.figure()
+		plt.plot(self.obs_st_resample.wavelength, self.obs_st_resample.flux*self.instrument.pl_st_contrast, color="b", label="star+atm")
+		plt.plot(self.obs_pl_resample.wavelength, self.obs_pl_resample.flux, color="orange", label="planet+atm")
+		plt.plot(self.obs_therm_resample.wavelength, self.obs_therm_resample.flux, color="g", label="thermal")
+		plt.plot(self.obs_zodi_resample.wavelength, self.obs_zodi_resample.flux, color="r", label="zodi")
+                plt.plot(self.obs_spec_resample.wavelength, self.obs_spec_resample.flux, color="yellow", label="obs")
+                plt.plot(self.atm_radi_spec_chunk_resample.wavelength, self.atm_radi_spec_chunk_resample.flux, color="black", label="sky")
+                plt.yscale("linear")
+                plt.legend()
+		plt.show(block=True)
 
             # calculate noise for obs_spec_resample, atm_radi_spec_chunk_resample, and obs_st_resample
             noise = self.calNoise(self.obs_spec_resample)
@@ -142,6 +180,10 @@ class HCI_HRS_Observation():
             self.obs_st_resample.addNoise(noise)
             noise = self.calNoise(self.obs_pl_resample)
             self.obs_pl_resample.addNoise(noise)
+            noise = self.calNoise(self.obs_therm_resample)
+            self.obs_therm_resample.addNoise(noise)
+            noise = self.calNoise(self.obs_zodi_resample)
+            self.obs_zodi_resample.addNoise(noise)
 
         # Excluding Earth's atmosphere, e.g., space-based observation  
         else:
@@ -159,7 +201,7 @@ class HCI_HRS_Observation():
             # st spectrum is then spectrally blurred and resampled to spectrograph wavelength grid
             
             self.obs_st = self.star_spec_chunk.copy()
-            self.obs_st.spectral_blur(rpower=self.star.spec_reso, quick_blur=True)
+            self.obs_st.spectral_blur(rpower=self.star.spec_reso, quick_blur=False)
             self.obs_st_resample = self.obs_st.resampleSpectoSpectrograph(pixel_sampling=self.instrument.pixel_sampling)
             self.obs_st_resample.scaleSpec(total_flux=self.star_total_flux)
             
@@ -168,7 +210,7 @@ class HCI_HRS_Observation():
             # pl spectrum is then spectrally blurred and resampled to spectrograph wavelength grid
             
             self.obs_pl = self.planet_spec_chunk.copy()
-            self.obs_pl.spectral_blur(rpower=self.planet.spec_reso, quick_blur=True)
+            self.obs_pl.spectral_blur(rpower=self.planet.spec_reso, quick_blur=False)
             self.obs_pl_resample = self.obs_pl.resampleSpectoSpectrograph(pixel_sampling=self.instrument.pixel_sampling)
             self.obs_pl_resample.scaleSpec(total_flux=self.planet_total_flux)
             
@@ -177,12 +219,12 @@ class HCI_HRS_Observation():
             #Thermal spectrum is then spectrally blurred and resampled to spectrograph wavelength grid
          
             self.obs_therm = self.therm_spec_chunk.copy()
-            self.obs_therm.spectral_blur(rpower=self.thermbg.spec_reso, quick_blur=True)
+            self.obs_therm.spectral_blur(rpower=self.thermbg.spec_reso, quick_blur=False)
             self.obs_therm_resample = self.obs_therm.resampleSpectoSpectrograph(pixel_sampling=self.instrument.pixel_sampling)
             self.obs_therm_resample.scaleSpec(total_flux=self.therm_total_flux)
         
             self.obs_zodi = self.zodi_spec_chunk.copy()
-            self.obs_zodi.spectral_blur(rpower=self.zodi.spec_reso, quick_blur=True)
+            self.obs_zodi.spectral_blur(rpower=self.zodi.spec_reso, quick_blur=False)
             self.obs_zodi_resample = self.obs_zodi.resampleSpectoSpectrograph(pixel_sampling=self.instrument.pixel_sampling)
             self.obs_zodi_resample.scaleSpec(total_flux=self.zodi_total_flux)
 
@@ -234,8 +276,13 @@ class HCI_HRS_Observation():
     def getSpecChunk(self, wav, flx):
         # get spectrum within wavelength range
         idx = ((wav < self.wav_max) & (wav > self.wav_min))
-        return {'Wavelength':wav[idx],'Flux':flx[idx]}
-                   
+        if np.size(wav[idx]) != 0 :
+            return {'Wavelength':wav[idx],'Flux':flx[idx]}
+        else:
+            wave = np.arange(self.wav_min, self.wav_max, 1e-4)
+            flux = np.zeros(np.shape(wave)) + 1e-99
+            return {'Wavelength':wave,'Flux':flux}
+               
     def removeNanInSpecChunk(self, spectrum):
         idx = np.isnan(spectrum.flux)
         spectrum.flux[idx] = np.nanmedian(spectrum.flux)
