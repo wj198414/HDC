@@ -34,7 +34,14 @@ class ZodiTarget():
 
         wavel = []
         zodi_per_pix = []
-                
+
+        #haystacks_tmp = pyfits.open(self.spec_path+"/"+os.listdir(self.spec_path)[0])
+        
+        #yy, xx = np.mgrid[:haystacks_tmp[1].data.shape[0], :haystacks_tmp[1].data.shape[1]]
+        #circle = (xx - planetcen[1])**2. + (yy - planetcen[0])**2.
+        
+        #haystacks_tmp.close()
+        
         for zodicube in sorted(os.listdir(self.spec_path)):
             
             haystacks = pyfits.open(self.spec_path+"/"+zodicube)

@@ -1,5 +1,13 @@
 hci_hrs_sim.py changelog
 
+10/27/17:
+
+Carl Coker
+
+-Fixed bug Ji pointed out in removeSkyTransmissionStar()
+    -Planet-star contrast was double-counted in subtraction
+    -This change will eventually be overwritten by Ji's fix
+
 10/26/17:
 
 Carl Coker
