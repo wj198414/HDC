@@ -34,7 +34,6 @@ class Instrument():
     #Columns of the table are 0:  wavelength in um.  1:  Thermal flux in one diffraction-limited pixel in W/um.
 
     def calcThermBackground(self):
-
         gold_refrac_data = np.genfromtxt("goldrefrac.txt", dtype=float) #Complex refractive index data (n+i*k) for gold.  Columns are:  0:  wavel in um; 1: n; 2: k.
 
         wavelidx = 0
@@ -53,7 +52,11 @@ class Instrument():
         therm_flux = 2.*scipy.constants.c**2.*scipy.constants.h*emiss/((gold_refrac_data[:,wavelidx])**3.*(1.e-6)**2.*(np.exp(scipy.constants.h*scipy.constants.c/(gold_refrac_data[:,wavelidx]*1.e-6*scipy.constants.k*self.temperature))-1))
       
         wavelcol = pyfits.Column(name="Wavelength", array=gold_refrac_data[:,wavelidx], format="E", unit="um")
-        fluxcol = pyfits.Column(name="Flux", array=therm_flux, format="E", unit="W / um")
+        if self.num_surfaces == 0:
+            print("num_surfaces = ", self.num_surfaces)
+            fluxcol = pyfits.Column(name="Flux", array=np.zeros(np.shape(therm_flux))+1e-99, format="E", unit="W / um")
+        else:
+            fluxcol = pyfits.Column(name="Flux", array=therm_flux, format="E", unit="W / um")
         thermhdu = pyfits.BinTableHDU.from_columns([wavelcol, fluxcol])
 
         return(thermhdu)
