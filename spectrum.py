@@ -158,8 +158,11 @@ class Spectrum():
         # scale spectrum so that summed flux from each pixel is equal to total_flux
         num_pixels = len(self.wavelength)
         spec_total_flux = np.sum(self.flux)
-        flx = self.flux / spec_total_flux * total_flux
-        self.flux = flx
+        if total_flux != 0.0:
+            flx = self.flux / spec_total_flux * total_flux
+            self.flux = flx
+        else:
+            self.flux = np.zeros(np.shape(self.flux)) + 1e-99
 
     def resampleSpec(self, wav_new):
         # resample a spectrum to a new wavelength grid
