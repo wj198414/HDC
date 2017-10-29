@@ -92,10 +92,16 @@ class Spectrum():
         flx_new = np.zeros(np.shape(flx))
         num = len(flx)
         i = 0
-        while i < num:
-            #flx_new[i] = np.max([np.random.poisson(np.round(flx[i]), 1)+0.0, np.random.normal(flx[i], self.noise[i], 1)])
-            flx_new[i] = np.random.normal(flx[i].value, self.noise[i].value, 1)
-            i = i + 1
+        if hasattr(flx[0], 'value'):
+            while i < num:
+                #flx_new[i] = np.max([np.random.poisson(np.round(flx[i]), 1)+0.0, np.random.normal(flx[i], self.noise[i], 1)])
+                flx_new[i] = np.random.normal(flx[i].value, self.noise[i].value, 1)
+                i = i + 1
+        else:
+            while i < num:
+                #flx_new[i] = np.max([np.random.poisson(np.round(flx[i]), 1)+0.0, np.random.normal(flx[i], self.noise[i], 1)])
+                flx_new[i] = np.random.normal(flx[i], self.noise[i], 1)
+                i = i + 1        
         spec.flux = flx_new
 
         if speckle_noise:
