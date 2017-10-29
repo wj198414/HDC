@@ -167,7 +167,7 @@ class HCI_HRS_Observation():
 		plt.plot(self.obs_zodi_resample.wavelength, self.obs_zodi_resample.flux, color="r", label="zodi")
                 plt.plot(self.obs_spec_resample.wavelength, self.obs_spec_resample.flux, color="yellow", label="obs")
                 plt.plot(self.atm_radi_spec_chunk_resample.wavelength, self.atm_radi_spec_chunk_resample.flux, color="black", label="sky")
-                plt.yscale("linear")
+                plt.yscale("log")
                 plt.legend()
 		plt.show(block=True)
 
