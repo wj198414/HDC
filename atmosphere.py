@@ -2,6 +2,7 @@ import numpy as np
 import astropy.io.ascii as ascii
 import pickle
 
+
 class Atmosphere():
     def __init__(self, spec_tran_path=None, spec_radi_path=None, radial_vel=1e1):
         self.spec_tran_path = spec_tran_path
@@ -11,8 +12,10 @@ class Atmosphere():
             with open(spec_tran_path, "rb") as handle:
                 [self.spec_tran_wav, self.spec_tran_flx] = pickle.load(handle)
             # fill in the hole between 5.6 and 7.0 micron
-            self.spec_tran_wav = np.hstack([np.arange(5.6, 7.0, 1e-5), self.spec_tran_wav]) # to avoid missing information in optical below 0.9 micron
+            self.spec_tran_wav = np.hstack([np.arange(5.6, 7.0, 1e-5), self.spec_tran_wav]) # to avoid missing information in optical between 5.6 and 7.0 micron
             self.spec_tran_flx = np.hstack([np.zeros(np.shape(np.arange(5.6, 7.0, 1e-5))) + 1e-99, self.spec_tran_flx])
+            self.spec_tran_wav = np.hstack([np.arange(0.3, 0.9, 1e-5), self.spec_tran_wav]) # to avoid missing information in optical below 0.9 micron
+            self.spec_tran_flx = np.hstack([np.zeros(np.shape(np.arange(0.3, 0.9, 1e-5))) + 1.0, self.spec_tran_flx])
             idx = np.argsort(self.spec_tran_wav)
             self.spec_tran_wav = self.spec_tran_wav[idx]
             self.spec_tran_flx = self.spec_tran_flx[idx] 
