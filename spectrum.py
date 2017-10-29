@@ -180,7 +180,7 @@ class Spectrum():
         self.flux = flx
         return self
 
-    def crossCorrelation(self, template, spec_mask=None, long_array=False, speed_flag=False):
+    def crossCorrelation(self, template, spec_mask=None, long_array=False, speed_flag=False, flag_plot=False):
         # positive peak means spectrum is blue shifted with respect to template
         # do not recommend long_array option. It does not produce the same SNR as the non-long_array option. 
         if not long_array:
@@ -205,6 +205,11 @@ class Spectrum():
                 flx_temp = flx_temp_new
                 flx = flx_new
                 wav = wav_new
+
+            if flag_plot:
+                plt.plot(wav, flx)
+                plt.plot(wav, flx_temp)
+                plt.show()
 
             cc = fp.ifft(fp.fft(flx_temp)*np.conj(fp.fft(flx)))
             ccf = fp.fftshift(cc)
