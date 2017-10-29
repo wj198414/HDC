@@ -27,9 +27,9 @@ class HCI_HRS_Reduction():
         self.template_resample = self.template.resampleSpectoSpectrograph(pixel_sampling=self.hci_hrs_obs.instrument.pixel_sampling)
         if self.hci_hrs_obs.atmosphere != None:
             # remove sky emission with spectrum obteined from the sky fiber
-            self.obs_emission_removed = self.removeSkyEmission(flag_plot=False)
+            self.obs_emission_removed = self.removeSkyEmission(flag_plot=True)
             # remove star and atmospheric transmission with spectrum obtained from the star fiber
-            self.obs_st_at_removed = self.removeSkyTransmissionStar(flag_plot=False)
+            self.obs_st_at_removed = self.removeSkyTransmissionStar(flag_plot=True)
             #self.obs_st_at_removed = self.obs_emission_removed
             #self.plotObsTemplate()
             # apply high pass filter to remove low frequency component
@@ -141,8 +141,9 @@ class HCI_HRS_Reduction():
                 spec = self.obs_st_at_removed.generateNoisySpec(speckle_noise=False)
                 ccf = spec.crossCorrelation(self.template_resample, **kwargs)
         if plot_flag:
-            plt.plot(self.obs_st_at_removed.wavelength, self.obs_st_at_removed.flux, alpha=0.5)
-            plt.plot(spec.wavelength, spec.flux, alpha=0.5)
+            plt.plot(self.obs_st_at_removed.wavelength, self.obs_st_at_removed.flux, alpha=0.5, label="obs")
+            plt.plot(self.template_high_pass.wavelength, self.template_high_pass.flux, alpha=0.5, label="temp")
+            plt.plot(spec.wavelength, spec.flux, alpha=0.5, label="obs high pass noise")
             plt.show()
         vel_pixel = scipy.constants.c / self.hci_hrs_obs.instrument.spec_reso / self.hci_hrs_obs.instrument.pixel_sampling
         ccf = ccf.getCCFchunk(vmin=-50*vel_pixel, vmax=50*vel_pixel)
@@ -248,6 +249,7 @@ class HCI_HRS_Reduction():
             plt.plot(self.hci_hrs_obs.obs_therm_resample.wavelength, self.hci_hrs_obs.obs_therm_resample.flux, label="therm")
             plt.plot(spec.wavelength, spec.flux, label="after")
             plt.plot(spec.wavelength, spec.noise, label="noise")
+            plt.yscale("log")
             plt.legend()
             plt.show()
         return(spec)
