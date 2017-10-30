@@ -27,9 +27,9 @@ class HCI_HRS_Reduction():
         self.template_resample = self.template.resampleSpectoSpectrograph(pixel_sampling=self.hci_hrs_obs.instrument.pixel_sampling)
         if self.hci_hrs_obs.atmosphere != None:
             # remove sky emission with spectrum obteined from the sky fiber
-            self.obs_emission_removed = self.removeSkyEmission(flag_plot=True)
+            self.obs_emission_removed = self.removeSkyEmission(flag_plot=False)
             # remove star and atmospheric transmission with spectrum obtained from the star fiber
-            self.obs_st_at_removed = self.removeSkyTransmissionStar(flag_plot=True)
+            self.obs_st_at_removed = self.removeSkyTransmissionStar(flag_plot=False)
             #self.obs_st_at_removed = self.obs_emission_removed
             #self.plotObsTemplate()
             # apply high pass filter to remove low frequency component
@@ -45,7 +45,7 @@ class HCI_HRS_Reduction():
             print(result)
             self.writeLog(result)
             #result = self.simulateMultiMeasurement(num_sim=10, ground_flag=True)
-            result = self.simulateMultiMeasurement_2(num_sim=100, ground_flag=True, speckle_flag=self.speckle_flag, spec_mask=None, long_array=False, speed_flag=False)
+            result = self.simulateMultiMeasurement(num_sim=100, flag_plot=False, ground_flag=True, speckle_flag=self.speckle_flag, spec_mask=None, long_array=False, speed_flag=False)
         else:
             #self.obs_emission_removed = self.hci_hrs_obs.obs_spec_resample.copy()
             self.obs_emission_removed = self.removeSkyEmission(flag_plot=True)
@@ -171,25 +171,32 @@ class HCI_HRS_Reduction():
 
         return({"CCF":ccf, "Center":cen, "SNR_RMS":snr_rms, "SNR_vs_NoiseLess":snr_vs_noise_less, "CCF_peak":peak})
 
-    def simulateMultiMeasurement(self, num_sim=10, **kwargs):
+    def simulateMultiMeasurement(self, num_sim=10, flag_plot=False, **kwargs):
         info_arr = np.zeros((3, num_sim))
         for i in np.arange(num_sim):
             result = self.simulateSingleMeasurement(**kwargs)
             self.writeLog(result)
             vel_pixel = scipy.constants.c / self.hci_hrs_obs.instrument.spec_reso / self.hci_hrs_obs.instrument.pixel_sampling
             vel_offset_in_pixel = np.abs(result["Center"] - self.hci_hrs_obs.planet.radial_vel) / vel_pixel
+            if self.hci_hrs_obs.atmosphere != None:
+                vel_offset_in_pixel = vel_offset_in_pixel
+            else:
+                vel_offset_in_pixel = 0.0
             if vel_offset_in_pixel <= 3.0: # this may only be relavant to ground based observation
-            #if vel_offset_in_pixel <= 3e5:
                 info_arr[:, i] = [result["SNR_RMS"], result["SNR_vs_NoiseLess"], 1]
             else:
                 info_arr[:, i] = [0.0, 0.0, 0]
         peak_correction_rate = (len(info_arr[2,:][np.where(info_arr[2,:] == 1)]) + 0.0) / (num_sim + 0.0)
-        if peak_correction_rate > 0.2:
+        if peak_correction_rate > 0.68:
             idx = np.where(info_arr[2,:] == 1)
-            SNR_RMS_mean = np.median(info_arr[0,idx])
-            SNR_RMS_std = np.std(np.sort(np.transpose(info_arr[0,idx]))[1:-1])
-            SNR_vs_NoiseLess_mean = np.median(info_arr[1,idx])
-            SNR_vs_NoiseLess_std = np.std(np.sort(np.transpose(info_arr[1,idx]))[1:-1])
+            SNR_RMS_mean = 0.0
+            SNR_RMS_std = 0.0
+            SNR = np.transpose(info_arr[1,idx])
+            if flag_plot:
+                plt.hist(SNR, alpha=0.3, label="R ={0:4.0f}".format(self.hci_hrs_obs.instrument.spec_reso))
+                plt.show()
+            SNR_vs_NoiseLess_mean = np.sort(SNR)[int(0.32*len(SNR))][0]
+            SNR_vs_NoiseLess_std = np.mean(SNR) / np.std(SNR)
         else:
             SNR_RMS_mean = 0.0
             SNR_RMS_std = 0.0
