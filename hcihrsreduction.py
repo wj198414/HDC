@@ -41,7 +41,7 @@ class HCI_HRS_Reduction():
             self.ccf_noise_less = self.ccf_noise_less.getCCFchunk(vmin=-50*vel_pixel, vmax=50*vel_pixel)
             self.ccf_peak = self.ccf_noise_less.calcPeak()
             # simulate observation with noise
-            result = self.simulateSingleMeasurement(plot_flag=True)
+            result = self.simulateSingleMeasurement(plot_flag=False)
             print(result)
             self.writeLog(result)
             #result = self.simulateMultiMeasurement(num_sim=10, ground_flag=True)
@@ -154,19 +154,22 @@ class HCI_HRS_Reduction():
         #peak = ccf.calcPeak()
         dif = np.abs(ccf.vel - cen)
         ind = np.where(dif == np.min(dif))[0][0]
-        pix_search = int(np.round(1e4 / vel_pixel)) # within 10 km/s 
+        #pix_search = int(np.round(1e4 / vel_pixel)) # within 10 km/s 
+        pix_search = 2 # within 2 vel_pixel 
         peak = np.max(ccf.ccf[ind-pix_search:ind+pix_search+1])
 
         ccf_orig = CrossCorrelationFunction(ccf.vel, ccf.ccf)
-        ccf.ccf = ccf.ccf - self.ccf_noise_less.ccf
-        ccf.ccf[ind-pix_search:ind+pix_search+1] = ccf_orig.ccf[ind-pix_search:ind+pix_search+1]
+        #ccf.ccf = ccf.ccf - self.ccf_noise_less.ccf
+        #ccf.ccf[ind-pix_search:ind+pix_search+1] = ccf_orig.ccf[ind-pix_search:ind+pix_search+1]
 
         if plot_flag:
             plt.plot(ccf.vel, ccf.ccf, "bo-", alpha=0.5)
             plt.plot(self.ccf_noise_less.vel, self.ccf_noise_less.ccf, "ro-", alpha=0.5)
+            plt.plot(ccf.vel, ccf.ccf - self.ccf_noise_less.ccf, "go-", alpha=0.5)
             plt.show()
 
-        snr_rms = ccf.calcSNRrms(peak=peak)
+        #snr_rms = ccf.calcSNRrms(peak=peak)
+        snr_rms = ccf.calcSNRrmsNoiseless(self.ccf_noise_less, peak=peak)
         snr_vs_noise_less = ccf.calcSNRnoiseLess(self.ccf_noise_less)
 
         return({"CCF":ccf, "Center":cen, "SNR_RMS":snr_rms, "SNR_vs_NoiseLess":snr_vs_noise_less, "CCF_peak":peak})
@@ -175,27 +178,21 @@ class HCI_HRS_Reduction():
         info_arr = np.zeros((3, num_sim))
         for i in np.arange(num_sim):
             result = self.simulateSingleMeasurement(**kwargs)
+            print("now at ", i, result["SNR_RMS"])
             self.writeLog(result)
             vel_pixel = scipy.constants.c / self.hci_hrs_obs.instrument.spec_reso / self.hci_hrs_obs.instrument.pixel_sampling
-            vel_offset_in_pixel = np.abs(result["Center"] - self.hci_hrs_obs.planet.radial_vel) / vel_pixel
-            if self.hci_hrs_obs.atmosphere != None:
-                vel_offset_in_pixel = vel_offset_in_pixel
-            else:
-                vel_offset_in_pixel = 0.0
-            if vel_offset_in_pixel <= 3.0: # this may only be relavant to ground based observation
-                info_arr[:, i] = [result["SNR_RMS"], result["SNR_vs_NoiseLess"], 1]
-            else:
-                info_arr[:, i] = [0.0, 0.0, 0]
+            info_arr[:, i] = [result["SNR_RMS"], result["CCF_peak"], 1]
+        # peak_correction_rate is always 100% because in simulateSingleMeasurement result["Center"] is always the planet vel.
         peak_correction_rate = (len(info_arr[2,:][np.where(info_arr[2,:] == 1)]) + 0.0) / (num_sim + 0.0)
         if peak_correction_rate > 0.68:
             idx = np.where(info_arr[2,:] == 1)
             SNR_RMS_mean = 0.0
             SNR_RMS_std = 0.0
-            SNR = np.transpose(info_arr[1,idx])
+            SNR = np.transpose(info_arr[0,idx]).flatten()
             if flag_plot:
                 plt.hist(SNR, alpha=0.3, label="R ={0:4.0f}".format(self.hci_hrs_obs.instrument.spec_reso))
                 plt.show()
-            SNR_vs_NoiseLess_mean = np.sort(SNR)[int(0.32*len(SNR))][0]
+            SNR_vs_NoiseLess_mean = np.sort(SNR)[int(0.32*len(SNR))]
             SNR_vs_NoiseLess_std = np.mean(SNR) / np.std(SNR)
         else:
             SNR_RMS_mean = 0.0
@@ -203,7 +200,7 @@ class HCI_HRS_Reduction():
             SNR_vs_NoiseLess_mean = 0.0
             SNR_vs_NoiseLess_std = 0.0
         with open("multi_sim_log.dat", "a+") as f:
-            f.write("{0:50s},{2:8.2e},{1:8.2e},{3:6.3f},{4:8.2e},{5:8.2e},{6:8.2e},{7:8.2e}\n".format(self.obj_tag, self.hci_hrs_obs.instrument.pl_st_contrast, self.hci_hrs_obs.instrument.spec_reso, peak_correction_rate, SNR_RMS_mean, SNR_RMS_std, SNR_vs_NoiseLess_mean, SNR_vs_NoiseLess_std))
+            f.write("{0:50s},{2:8.3e},{1:8.3e},{3:6.3f},{4:8.2e},{5:8.2e},{6:8.2e},{7:8.2e}\n".format(self.obj_tag, self.hci_hrs_obs.instrument.pl_st_contrast, self.hci_hrs_obs.instrument.spec_reso, peak_correction_rate, vel_pixel, np.sort(SNR)[int(0.05*len(SNR))], np.sort(SNR)[int(0.32*len(SNR))], np.sort(SNR)[int(0.50*len(SNR))]))
         return([peak_correction_rate, SNR_RMS_mean, SNR_RMS_std, SNR_vs_NoiseLess_mean, SNR_vs_NoiseLess_std])
 
     def simulateMultiMeasurement_2(self, num_sim=10, **kwargs):
