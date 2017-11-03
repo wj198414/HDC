@@ -5,13 +5,14 @@ from datetime import datetime
 from crosscorrelationfunction import CrossCorrelationFunction
 
 class HCI_HRS_Reduction():
-    def __init__(self, hci_hrs_obs, template, save_flag=False, obj_tag="a", template_tag="b", speckle_flag=False):
+    def __init__(self, hci_hrs_obs, template, save_flag=False, obj_tag="a", template_tag="b", speckle_flag=False, resolution_elements_in_ccf=1e3):
         self.hci_hrs_obs = hci_hrs_obs
         self.template = template
         self.save_flag=save_flag
         self.obj_tag = obj_tag
         self.template_tag = template_tag
         self.speckle_flag = speckle_flag
+        self.resolution_elements_in_ccf = resolution_elements_in_ccf
         self.execute()
 
     def execute(self):
@@ -23,13 +24,13 @@ class HCI_HRS_Reduction():
         # rotational and spectral broaden template and resample template to instrument grid
         self.template.resampleSpec(self.hci_hrs_obs.star_spec_chunk.wavelength)
         #self.template.rotational_blur(rot_vel=self.hci_hrs_obs.planet.rotation_vel)
-        self.template.spectral_blur(rpower=self.template.spec_reso, quick_blur=True)
+        self.template.spectral_blur(rpower=self.template.spec_reso, quick_blur=False)
         self.template_resample = self.template.resampleSpectoSpectrograph(pixel_sampling=self.hci_hrs_obs.instrument.pixel_sampling)
         if self.hci_hrs_obs.atmosphere != None:
             # remove sky emission with spectrum obteined from the sky fiber
-            self.obs_emission_removed = self.removeSkyEmission(flag_plot=False)
+            self.obs_emission_removed = self.removeSkyEmission(flag_plot=True)
             # remove star and atmospheric transmission with spectrum obtained from the star fiber
-            self.obs_st_at_removed = self.removeSkyTransmissionStar(flag_plot=False)
+            self.obs_st_at_removed = self.removeSkyTransmissionStar(flag_plot=True)
             #self.obs_st_at_removed = self.obs_emission_removed
             #self.plotObsTemplate()
             # apply high pass filter to remove low frequency component
@@ -38,10 +39,10 @@ class HCI_HRS_Reduction():
             # cross correlate reduced spectrum and template
             self.ccf_noise_less = self.obs_high_pass.crossCorrelation(self.template_high_pass, spec_mask=None, long_array=False, speed_flag=False)
             vel_pixel = scipy.constants.c / self.hci_hrs_obs.instrument.spec_reso / self.hci_hrs_obs.instrument.pixel_sampling
-            self.ccf_noise_less = self.ccf_noise_less.getCCFchunk(vmin=-50*vel_pixel, vmax=50*vel_pixel)
+            self.ccf_noise_less = self.ccf_noise_less.getCCFchunk(vmin=-self.resolution_elements_in_ccf*vel_pixel+self.hci_hrs_obs.planet.radial_vel, vmax=self.resolution_elements_in_ccf*vel_pixel+self.hci_hrs_obs.planet.radial_vel)
             self.ccf_peak = self.ccf_noise_less.calcPeak()
             # simulate observation with noise
-            result = self.simulateSingleMeasurement(plot_flag=False)
+            result = self.simulateSingleMeasurement(plot_flag=True)
             print(result)
             self.writeLog(result)
             #result = self.simulateMultiMeasurement(num_sim=10, ground_flag=True)
@@ -76,7 +77,7 @@ class HCI_HRS_Reduction():
             else:
                 self.ccf_noise_less = self.obs_st_at_removed.crossCorrelation(self.template_resample, spec_mask=mask_arr, long_array=False, speed_flag=False)
             vel_pixel = scipy.constants.c / self.hci_hrs_obs.instrument.spec_reso / self.hci_hrs_obs.instrument.pixel_sampling
-            self.ccf_noise_less = self.ccf_noise_less.getCCFchunk(vmin=-50*vel_pixel, vmax=50*vel_pixel)
+            self.ccf_noise_less = self.ccf_noise_less.getCCFchunk(vmin=-self.resolution_elements_in_ccf*vel_pixel+self.hci_hrs_obs.planet.radial_vel, vmax=self.resolution_elements_in_ccf*vel_pixel+self.hci_hrs_obs.planet.radial_vel)
             self.ccf_peak = self.ccf_noise_less.calcPeak()
             result = self.simulateSingleMeasurement(ground_flag=False, plot_flag=True, speckle_flag=self.speckle_flag, spec_mask=mask_arr, long_array=False, speed_flag=False)
             print(result)
@@ -141,12 +142,13 @@ class HCI_HRS_Reduction():
                 spec = self.obs_st_at_removed.generateNoisySpec(speckle_noise=False)
                 ccf = spec.crossCorrelation(self.template_resample, **kwargs)
         if plot_flag:
-            plt.plot(self.obs_st_at_removed.wavelength, self.obs_st_at_removed.flux, alpha=0.5, label="obs")
-            plt.plot(self.template_high_pass.wavelength, self.template_high_pass.flux, alpha=0.5, label="temp")
+            plt.plot(self.obs_st_at_removed.wavelength, self.obs_st_at_removed.flux / np.max(self.obs_st_at_removed.flux), alpha=0.5, label="obs")
+            plt.plot(self.template_high_pass.wavelength, self.template_high_pass.flux / np.max(self.template_high_pass.flux) , alpha=0.5, label="temp")
             plt.plot(spec.wavelength, spec.flux, alpha=0.5, label="obs high pass noise")
+            plt.legend()
             plt.show()
         vel_pixel = scipy.constants.c / self.hci_hrs_obs.instrument.spec_reso / self.hci_hrs_obs.instrument.pixel_sampling
-        ccf = ccf.getCCFchunk(vmin=-50*vel_pixel, vmax=50*vel_pixel)
+        ccf = ccf.getCCFchunk(vmin=-self.resolution_elements_in_ccf*vel_pixel+self.hci_hrs_obs.planet.radial_vel, vmax=self.resolution_elements_in_ccf*vel_pixel+self.hci_hrs_obs.planet.radial_vel)
 
         #cen = ccf.calcCentroid()
         cen = self.hci_hrs_obs.planet.radial_vel 
@@ -292,6 +294,8 @@ class HCI_HRS_Reduction():
             plt.plot(obs_st_at_removed.wavelength, obs_st_at_removed.noise, label="noise")
             plt.plot(atm_tran.wavelength, atm_tran.flux, label="tran")
             plt.plot(obs_st_at_removed.wavelength, obs_st_at_removed.flux / self.hci_hrs_obs.obs_pl_resample.flux, label="after/pl")
+            plt.plot(self.hci_hrs_obs.obs_st_resample.wavelength, st_tran_free_flux, label="st")
+            #plt.plot(self.hci_hrs_obs.obs_st_resample.wavelength, self.obs_emission_removed.flux / atm_tran.flux, label="pl+st w/o atm")
             plt.yscale("log")
             plt.legend()
             plt.show()
