@@ -18,7 +18,7 @@ sim_detections = sim_results[detections]
 #print sim_detections[np.argmax(sim_detections[:,contrast_col])]
 
 desired_res = 25000
-desired_zodi = 12.9
+desired_zodi = 35.9
 desired_contrast = 1.e-11
 desired_texp = 400*3600
 

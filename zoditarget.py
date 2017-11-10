@@ -56,7 +56,7 @@ class ZodiTarget():
             pix_rad = np.array((wavel_temp*u.um*self.distance*u.pc/(self.instrument.telescope_size*u.m*pixel_scale)).decompose()/2)
             yy, xx = np.mgrid[:haystacks[1].data.shape[0], :haystacks[1].data.shape[1]]
             circle = (xx - planetcen[1])**2. + (yy - planetcen[0])**2.
-
+            #print pix_rad
             #Sum up the zodi inside the planet PSF at each wavelength
             for i in range(N_EXT):
                 zodi_per_pix.append(np.sum(haystacks[i+1].data[circle < pix_rad[i]**2.]))
