@@ -1,5 +1,13 @@
 hci_hrs_sim.py changelog
 
+11/14/17:
+
+Ji Wang
+
+-add calcSNRrmsNoiseless in crosscorrelationfunction.py
+	-to calculate CCF SNR with specified peak with ccf.noiseless subtracted. 
+
+
 10/27/17:
 
 Carl Coker

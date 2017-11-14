@@ -73,6 +73,17 @@ class CrossCorrelationFunction():
             snr = peak / np.std(cc[ind_rms[0]:ind_rms[1]])
         return(snr)
 
+    def calcSNRrmsNoiseless(self, ccf_noise_less, peak=None):
+        cc = self.ccf
+        cc_subtracted = cc - ccf_noise_less.ccf
+
+        ind_max = np.argmax(cc)
+        num = len(cc)
+        snr = np.max([cc[ind_max] / np.std(cc_subtracted[0:int(num / 4.0)]), cc[ind_max] / np.std(cc_subtracted[-int(num / 4.0):-1])])
+        if not (peak is None):
+            snr = np.max([peak / np.std(cc_subtracted[0:int(num / 4.0)]), peak / np.std(cc_subtracted[-int(num / 4.0):-1])])
+        return(snr)
+
     def calcSNRnoiseLess(self, ccf_noise_less):
         cc = self.ccf
         cc_subtracted = cc - ccf_noise_less.ccf
