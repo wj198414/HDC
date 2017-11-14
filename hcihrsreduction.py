@@ -5,13 +5,14 @@ from datetime import datetime
 from crosscorrelationfunction import CrossCorrelationFunction
 
 class HCI_HRS_Reduction():
-    def __init__(self, hci_hrs_obs, template, save_flag=False, obj_tag="a", template_tag="b", speckle_flag=False):
+    def __init__(self, hci_hrs_obs, template, save_flag=False, obj_tag="a", template_tag="b", speckle_flag=False, resolution_elements_in_ccf=1e3):
         self.hci_hrs_obs = hci_hrs_obs
         self.template = template
         self.save_flag=save_flag
         self.obj_tag = obj_tag
         self.template_tag = template_tag
         self.speckle_flag = speckle_flag
+        self.resolution_elements_in_ccf = resolution_elements_in_ccf
         self.execute()
 
     def execute(self):
@@ -23,28 +24,33 @@ class HCI_HRS_Reduction():
         # rotational and spectral broaden template and resample template to instrument grid
         self.template.resampleSpec(self.hci_hrs_obs.star_spec_chunk.wavelength)
         #self.template.rotational_blur(rot_vel=self.hci_hrs_obs.planet.rotation_vel)
-        self.template.spectral_blur(rpower=self.template.spec_reso, quick_blur=True)
+        self.template.spectral_blur(rpower=self.template.spec_reso, quick_blur=False)
         self.template_resample = self.template.resampleSpectoSpectrograph(pixel_sampling=self.hci_hrs_obs.instrument.pixel_sampling)
         if self.hci_hrs_obs.atmosphere != None:
             # remove sky emission with spectrum obteined from the sky fiber
-            self.obs_emission_removed = self.removeSkyEmission()
+            self.obs_emission_removed = self.removeSkyEmission(flag_plot=True)
             # remove star and atmospheric transmission with spectrum obtained from the star fiber
-            self.obs_st_at_removed = self.removeSkyTransmissionStar()
+            self.obs_st_at_removed = self.removeSkyTransmissionStar(flag_plot=True)
             #self.obs_st_at_removed = self.obs_emission_removed
             #self.plotObsTemplate()
             # apply high pass filter to remove low frequency component
             self.template_high_pass = self.template_resample.applyHighPassFilter()
             self.obs_high_pass = self.obs_st_at_removed.applyHighPassFilter()
             # cross correlate reduced spectrum and template
-            self.ccf_noise_less = self.obs_high_pass.crossCorrelation(self.template_high_pass)
+            self.ccf_noise_less = self.obs_high_pass.crossCorrelation(self.template_high_pass, spec_mask=None, long_array=False, speed_flag=False)
+            vel_pixel = scipy.constants.c / self.hci_hrs_obs.instrument.spec_reso / self.hci_hrs_obs.instrument.pixel_sampling
+            self.ccf_noise_less = self.ccf_noise_less.getCCFchunk(vmin=-self.resolution_elements_in_ccf*vel_pixel+self.hci_hrs_obs.planet.radial_vel, vmax=self.resolution_elements_in_ccf*vel_pixel+self.hci_hrs_obs.planet.radial_vel)
+            self.ccf_peak = self.ccf_noise_less.calcPeak()
             # simulate observation with noise
-            result = self.simulateSingleMeasurement(plot_flag=False)
+            result = self.simulateSingleMeasurement(plot_flag=True)
             print(result)
             self.writeLog(result)
-            result = self.simulateMultiMeasurement(num_sim=10, ground_flag=True)
+            #result = self.simulateMultiMeasurement(num_sim=10, ground_flag=True)
+            result = self.simulateMultiMeasurement(num_sim=100, flag_plot=False, ground_flag=True, speckle_flag=self.speckle_flag, spec_mask=None, long_array=False, speed_flag=False)
         else:
-            self.obs_emission_removed = self.hci_hrs_obs.obs_spec_resample.copy()
-            self.obs_st_at_removed = self.removeSkyTransmissionStar()            
+            #self.obs_emission_removed = self.hci_hrs_obs.obs_spec_resample.copy()
+            self.obs_emission_removed = self.removeSkyEmission(flag_plot=True)
+            self.obs_st_at_removed = self.removeSkyTransmissionStar(flag_plot=True)            
             #obs_norm = self.obs_st_at_removed.getSpecNorm(num_chunks=20, poly_order=3)
             print(str(datetime.now()))
             #Normalization is to make sure that the input spectrum for the CCF is flat; 
@@ -55,13 +61,14 @@ class HCI_HRS_Reduction():
             self.obs_st_at_removed.noise = self.obs_st_at_removed.noise / obs_norm
             #mask_arr = np.where((self.template_resample.flux / np.nanmedian(self.template_resample.flux)) > 0.99)
             mask_arr = np.where((self.template_resample.flux / np.nanmedian(self.template_resample.flux)) > 1e9)
-            #plt.errorbar(self.obs_st_at_removed.wavelength, self.obs_st_at_removed.flux, yerr=self.obs_st_at_removed.noise)
-            plt.figure()
-            plt.errorbar(self.obs_st_at_removed.wavelength, self.obs_st_at_removed.flux, self.obs_st_at_removed.noise)
-            #plt.plot(self.template_resample.wavelength, self.template_resample.flux / np.median(self.template_resample.flux))
-            plt.plot(self.template_resample.wavelength[mask_arr], self.template_resample.flux[mask_arr] / np.median(self.template_resample.flux[mask_arr]))
-            plt.plot(self.obs_st_at_removed.wavelength[mask_arr], self.obs_st_at_removed.flux[mask_arr], "b.")
-            plt.show(block=False)
+            if 1 == 1:
+		#plt.errorbar(self.obs_st_at_removed.wavelength, self.obs_st_at_removed.flux, yerr=self.obs_st_at_removed.noise)
+		plt.figure()
+		plt.errorbar(self.obs_st_at_removed.wavelength, self.obs_st_at_removed.flux, self.obs_st_at_removed.noise)
+		#plt.plot(self.template_resample.wavelength, self.template_resample.flux / np.median(self.template_resample.flux))
+		plt.plot(self.template_resample.wavelength[mask_arr], self.template_resample.flux[mask_arr] / np.median(self.template_resample.flux[mask_arr]))
+		plt.plot(self.obs_st_at_removed.wavelength[mask_arr], self.obs_st_at_removed.flux[mask_arr], "b.")
+		plt.show(block=True)
             if self.speckle_flag:
                 self.cutoff_value = self.hci_hrs_obs.instrument.spec_reso / 6.0
                 self.template_resample = self.template_resample.applyHighPassFilter(cutoff=self.cutoff_value)
@@ -69,17 +76,11 @@ class HCI_HRS_Reduction():
             else:
                 self.ccf_noise_less = self.obs_st_at_removed.crossCorrelation(self.template_resample, spec_mask=mask_arr, long_array=False, speed_flag=False)
             vel_pixel = scipy.constants.c / self.hci_hrs_obs.instrument.spec_reso / self.hci_hrs_obs.instrument.pixel_sampling
-            self.ccf_noise_less = self.ccf_noise_less.getCCFchunk(vmin=-50*vel_pixel, vmax=50*vel_pixel)
+            self.ccf_noise_less = self.ccf_noise_less.getCCFchunk(vmin=-self.resolution_elements_in_ccf*vel_pixel+self.hci_hrs_obs.planet.radial_vel, vmax=self.resolution_elements_in_ccf*vel_pixel+self.hci_hrs_obs.planet.radial_vel)
             self.ccf_peak = self.ccf_noise_less.calcPeak()
-            result = self.simulateSingleMeasurement(ground_flag=False, plot_flag=False, speckle_flag=self.speckle_flag, spec_mask=mask_arr, long_array=False, speed_flag=False)
+            result = self.simulateSingleMeasurement(ground_flag=False, plot_flag=True, speckle_flag=self.speckle_flag, spec_mask=mask_arr, long_array=False, speed_flag=False)
             print(result)
             self.writeLog(result)
-            plt.figure()
-            plt.plot(result["CCF"].vel, result["CCF"].ccf, "bo-")
-            plt.plot(self.ccf_noise_less.vel, self.ccf_noise_less.ccf, "r")
-            plt.figure()
-            plt.plot(result["CCF"].vel, result["CCF"].ccf - self.ccf_noise_less.ccf, "bo-")
-            plt.show(block=False)
             #result = self.simulateMultiMeasurement(num_sim=100, ground_flag=False, speckle_flag=self.speckle_flag, spec_mask=mask_arr, long_array=False, speed_flag=True)
             result = self.simulateMultiMeasurement_2(num_sim=100, ground_flag=False, speckle_flag=self.speckle_flag, spec_mask=mask_arr, long_array=False, speed_flag=False)
 
@@ -130,7 +131,7 @@ class HCI_HRS_Reduction():
 
     def simulateSingleMeasurement(self, ground_flag=True, plot_flag=False, speckle_flag=False, **kwargs):
         if ground_flag:
-            spec = self.obs_st_at_removed.generateNoisySpec().applyHighPassFilter()
+            spec = self.obs_st_at_removed.applyHighPassFilter().generateNoisySpec()
             ccf = spec.crossCorrelation(self.template_high_pass, **kwargs)
         else:
             if speckle_flag:
@@ -140,10 +141,13 @@ class HCI_HRS_Reduction():
                 spec = self.obs_st_at_removed.generateNoisySpec(speckle_noise=False)
                 ccf = spec.crossCorrelation(self.template_resample, **kwargs)
         if plot_flag:
-            plt.plot(self.obs_st_at_removed.wavelength, self.obs_st_at_removed.flux)
-            plt.plot(spec.wavelength, spec.flux)
+            plt.plot(self.obs_st_at_removed.wavelength, self.obs_st_at_removed.flux / np.max(self.obs_st_at_removed.flux), alpha=0.5, label="obs")
+            plt.plot(self.template_high_pass.wavelength, self.template_high_pass.flux / np.max(self.template_high_pass.flux) , alpha=0.5, label="temp")
+            plt.plot(spec.wavelength, spec.flux, alpha=0.5, label="obs high pass noise")
+            plt.legend()
+            plt.show()
         vel_pixel = scipy.constants.c / self.hci_hrs_obs.instrument.spec_reso / self.hci_hrs_obs.instrument.pixel_sampling
-        ccf = ccf.getCCFchunk(vmin=-50*vel_pixel, vmax=50*vel_pixel)
+        ccf = ccf.getCCFchunk(vmin=-self.resolution_elements_in_ccf*vel_pixel+self.hci_hrs_obs.planet.radial_vel, vmax=self.resolution_elements_in_ccf*vel_pixel+self.hci_hrs_obs.planet.radial_vel)
 
         #cen = ccf.calcCentroid()
         cen = self.hci_hrs_obs.planet.radial_vel 
@@ -151,44 +155,53 @@ class HCI_HRS_Reduction():
         #peak = ccf.calcPeak()
         dif = np.abs(ccf.vel - cen)
         ind = np.where(dif == np.min(dif))[0][0]
-        pix_search = int(np.round(1e4 / vel_pixel)) # within 10 km/s 
+        #pix_search = int(np.round(1e4 / vel_pixel)) # within 10 km/s 
+        pix_search = 2 # within 2 vel_pixel 
         peak = np.max(ccf.ccf[ind-pix_search:ind+pix_search+1])
 
         ccf_orig = CrossCorrelationFunction(ccf.vel, ccf.ccf)
-        ccf.ccf = ccf.ccf - self.ccf_noise_less.ccf
-        ccf.ccf[ind-pix_search:ind+pix_search+1] = ccf_orig.ccf[ind-pix_search:ind+pix_search+1]
+        #ccf.ccf = ccf.ccf - self.ccf_noise_less.ccf
+        #ccf.ccf[ind-pix_search:ind+pix_search+1] = ccf_orig.ccf[ind-pix_search:ind+pix_search+1]
 
-        snr_rms = ccf.calcSNRrms(peak=peak)
+        if plot_flag:
+            plt.plot(ccf.vel, ccf.ccf, "bo-", alpha=0.5)
+            plt.plot(self.ccf_noise_less.vel, self.ccf_noise_less.ccf, "ro-", alpha=0.5)
+            plt.plot(ccf.vel, ccf.ccf - self.ccf_noise_less.ccf, "go-", alpha=0.5)
+            plt.show()
+
+        #snr_rms = ccf.calcSNRrms(peak=peak)
+        snr_rms = ccf.calcSNRrmsNoiseless(self.ccf_noise_less, peak=peak)
         snr_vs_noise_less = ccf.calcSNRnoiseLess(self.ccf_noise_less)
 
         return({"CCF":ccf, "Center":cen, "SNR_RMS":snr_rms, "SNR_vs_NoiseLess":snr_vs_noise_less, "CCF_peak":peak})
 
-    def simulateMultiMeasurement(self, num_sim=10, **kwargs):
+    def simulateMultiMeasurement(self, num_sim=10, flag_plot=False, **kwargs):
         info_arr = np.zeros((3, num_sim))
         for i in np.arange(num_sim):
             result = self.simulateSingleMeasurement(**kwargs)
+            print("now at ", i, result["SNR_RMS"])
             self.writeLog(result)
             vel_pixel = scipy.constants.c / self.hci_hrs_obs.instrument.spec_reso / self.hci_hrs_obs.instrument.pixel_sampling
-            vel_offset_in_pixel = np.abs(result["Center"] - self.hci_hrs_obs.planet.radial_vel) / vel_pixel
-            if vel_offset_in_pixel <= 3.0: # this may only be relavant to ground based observation
-            #if vel_offset_in_pixel <= 3e5:
-                info_arr[:, i] = [result["SNR_RMS"], result["SNR_vs_NoiseLess"], 1]
-            else:
-                info_arr[:, i] = [0.0, 0.0, 0]
+            info_arr[:, i] = [result["SNR_RMS"], result["CCF_peak"], 1]
+        # peak_correction_rate is always 100% because in simulateSingleMeasurement result["Center"] is always the planet vel.
         peak_correction_rate = (len(info_arr[2,:][np.where(info_arr[2,:] == 1)]) + 0.0) / (num_sim + 0.0)
-        if peak_correction_rate > 0.2:
+        if peak_correction_rate > 0.68:
             idx = np.where(info_arr[2,:] == 1)
-            SNR_RMS_mean = np.median(info_arr[0,idx])
-            SNR_RMS_std = np.std(np.sort(np.transpose(info_arr[0,idx]))[1:-1])
-            SNR_vs_NoiseLess_mean = np.median(info_arr[1,idx])
-            SNR_vs_NoiseLess_std = np.std(np.sort(np.transpose(info_arr[1,idx]))[1:-1])
+            SNR_RMS_mean = 0.0
+            SNR_RMS_std = 0.0
+            SNR = np.transpose(info_arr[0,idx]).flatten()
+            if flag_plot:
+                plt.hist(SNR, alpha=0.3, label="R ={0:4.0f}".format(self.hci_hrs_obs.instrument.spec_reso))
+                plt.show()
+            SNR_vs_NoiseLess_mean = np.sort(SNR)[int(0.32*len(SNR))]
+            SNR_vs_NoiseLess_std = np.mean(SNR) / np.std(SNR)
         else:
             SNR_RMS_mean = 0.0
             SNR_RMS_std = 0.0
             SNR_vs_NoiseLess_mean = 0.0
             SNR_vs_NoiseLess_std = 0.0
         with open("multi_sim_log.dat", "a+") as f:
-            f.write("{0:50s},{2:8.2e},{1:8.2e},{3:6.3f},{4:8.2e},{5:8.2e},{6:8.2e},{7:8.2e}\n".format(self.obj_tag, self.hci_hrs_obs.instrument.pl_st_contrast, self.hci_hrs_obs.instrument.spec_reso, peak_correction_rate, SNR_RMS_mean, SNR_RMS_std, SNR_vs_NoiseLess_mean, SNR_vs_NoiseLess_std))
+            f.write("{0:50s},{2:8.3e},{1:8.3e},{3:6.3f},{4:8.2e},{5:8.2e},{6:8.2e},{7:8.2e}\n".format(self.obj_tag, self.hci_hrs_obs.instrument.pl_st_contrast, self.hci_hrs_obs.instrument.spec_reso, peak_correction_rate, vel_pixel, np.sort(SNR)[int(0.05*len(SNR))], np.sort(SNR)[int(0.32*len(SNR))], np.sort(SNR)[int(0.50*len(SNR))]))
         return([peak_correction_rate, SNR_RMS_mean, SNR_RMS_std, SNR_vs_NoiseLess_mean, SNR_vs_NoiseLess_std])
 
     def simulateMultiMeasurement_2(self, num_sim=10, **kwargs):
@@ -229,32 +242,63 @@ class HCI_HRS_Reduction():
             f.write("{0:50s},{2:8.2e},{1:8.2e},{3:6.3f},{4:8.2e},{5:8.2e},{6:8.2e},{7:8.2e}\n".format(self.obj_tag, self.hci_hrs_obs.instrument.pl_st_contrast, self.hci_hrs_obs.instrument.spec_reso, peak_correction_rate, SNR_RMS_mean, SNR_RMS_std, SNR_vs_NoiseLess_mean, SNR_vs_NoiseLess_std))
         return([peak_correction_rate, SNR_RMS_mean, SNR_RMS_std, SNR_vs_NoiseLess_mean, SNR_vs_NoiseLess_std])
 
-    def removeSkyEmission(self):
+    def removeSkyEmission(self, flag_plot=False):
         spec = self.hci_hrs_obs.obs_spec_resample.copy()
         spec.wavelength = self.hci_hrs_obs.atm_radi_spec_chunk_resample.wavelength
-        spec.flux = self.hci_hrs_obs.obs_spec_resample.flux - self.hci_hrs_obs.atm_radi_spec_chunk_resample.flux
+        spec.flux = self.hci_hrs_obs.obs_spec_resample.flux - self.hci_hrs_obs.atm_radi_spec_chunk_resample.flux - self.hci_hrs_obs.obs_therm_resample.flux
         spec.noise = None
-        spec.addNoise(np.sqrt(self.hci_hrs_obs.obs_spec_resample.noise**2 + self.hci_hrs_obs.atm_radi_spec_chunk_resample.noise**2))
+        spec.addNoise(np.sqrt(self.hci_hrs_obs.obs_spec_resample.noise**2 + self.hci_hrs_obs.atm_radi_spec_chunk_resample.noise**2 + self.hci_hrs_obs.obs_therm_resample.noise**2))
+        if flag_plot:
+            plt.plot(self.hci_hrs_obs.obs_spec_resample.wavelength, self.hci_hrs_obs.obs_spec_resample.flux, label="obs")
+            plt.plot(self.hci_hrs_obs.atm_radi_spec_chunk_resample.wavelength, self.hci_hrs_obs.atm_radi_spec_chunk_resample.flux, label="sky")
+            plt.plot(self.hci_hrs_obs.obs_therm_resample.wavelength, self.hci_hrs_obs.obs_therm_resample.flux, label="therm")
+            plt.plot(spec.wavelength, spec.flux, label="after")
+            plt.plot(spec.wavelength, spec.noise, label="noise")
+            plt.yscale("log")
+            plt.legend()
+            plt.show()
         return(spec)
 
     #Noise model and final observed spectrum made more realistic.  Can't easily remove thermal+zodi backgrounds!
         
-    def removeSkyTransmissionStar(self):
+    def removeSkyTransmissionStar(self, flag_plot=False):
         flx_st_atm = self.hci_hrs_obs.obs_st_resample.flux
         flx_obs = self.obs_emission_removed.flux
         wav_obs = self.obs_emission_removed.wavelength
         flx_st_atm_norm = flx_st_atm / np.median(flx_st_atm)
         obs_st_at_removed = self.hci_hrs_obs.obs_st_resample.copy()
         obs_st_at_removed.wavelength = wav_obs
-        #noise = np.sqrt((self.obs_emission_removed.noise / self.obs_emission_removed.flux)**2 + (self.hci_hrs_obs.obs_st_resample.noise / self.hci_hrs_obs.obs_st_resample.flux)**2 + (self.hci_hrs_obs.obs_therm_resample.noise/self.hci_hrs_obs.obs_therm_resample.flux)**2) * self.obs_emission_removed.flux
-        st_resample_mod = self.hci_hrs_obs.obs_st_resample.copy()
-        st_resample_mod.flux *= self.hci_hrs_obs.instrument.pl_st_contrast
-        noise = np.sqrt(self.obs_emission_removed.noise**2 + self.hci_hrs_obs.calNoise(st_resample_mod)**2)
-        #obs_st_at_removed.flux = flx_obs / flx_st_atm_norm # neither division or subtraction cannot remove sky transmission and star absorption. This is potentially due to linear interpolation error in previous procedures. More precise interpolation may help but may not work in real observation. Therefore, I cheat here to assume that sky transmission and star absorption can somehow be removed and reveal planet signal, but I don't know exactly how. 
-        #obs_st_at_removed.flux = self.hci_hrs_obs.obs_pl_resample.flux
-        obs_st_at_removed.flux = self.obs_emission_removed.flux - st_resample_mod.flux
-        obs_st_at_removed.noise = None
-        obs_st_at_removed.addNoise(np.abs(noise))
+        if 1 == 0:
+	          #noise = np.sqrt((self.obs_emission_removed.noise / self.obs_emission_removed.flux)**2 + (self.hci_hrs_obs.obs_st_resample.noise / self.hci_hrs_obs.obs_st_resample.flux)**2 + (self.hci_hrs_obs.obs_therm_resample.noise/self.hci_hrs_obs.obs_therm_resample.flux)**2) * self.obs_emission_removed.flux
+	          st_resample_mod = self.hci_hrs_obs.obs_st_resample.copy()
+            st_resample_mod.flux *= self.hci_hrs_obs.instrument.pl_st_contrast
+	          noise = np.sqrt(self.obs_emission_removed.noise**2 + self.hci_hrs_obs.calNoise(st_resample_mod)**2)
+	          #obs_st_at_removed.flux = flx_obs / flx_st_atm_norm # neither division or subtraction cannot remove sky transmission and star absorption. This is potentially due to linear interpolation error in previous procedures. More precise interpolation may help but may not work in real observation. Therefore, I cheat here to assume that sky transmission and star absorption can somehow be removed and reveal planet signal, but I don't know exactly how. 
+	          #obs_st_at_removed.flux = self.hci_hrs_obs.obs_pl_resample.flux
+	          obs_st_at_removed.flux = self.obs_emission_removed.flux - self.hci_hrs_obs.obs_st_resample.flux*self.hci_hrs_obs.instrument.pl_st_contrast # this is not correct, obs_st_resample has already been multiplied by pl_st_contrast, see a few lines above
+	          obs_st_at_removed.noise = None
+	          obs_st_at_removed.addNoise(np.abs(noise))
+        else:
+            self.hci_hrs_obs.obs_st_resample.flux *= self.hci_hrs_obs.instrument.pl_st_contrast # obs_st_resample is now attenuated by coronagraph
+            noise = np.sqrt(self.obs_emission_removed.noise**2 + self.hci_hrs_obs.calNoise(self.hci_hrs_obs.obs_st_resample)**2)
+            atm_tran = self.hci_hrs_obs.obs_atm_tran_resample.copy()
+            st_tran_free_flux = self.hci_hrs_obs.obs_st_resample.flux / atm_tran.flux
+            obs_st_at_removed.flux = (self.obs_emission_removed.flux / atm_tran.flux) - st_tran_free_flux 
+            obs_st_at_removed.noise = None
+            obs_st_at_removed.addNoise(np.abs(noise))
+        if flag_plot:
+            plt.plot(self.obs_emission_removed.wavelength, self.obs_emission_removed.flux, label="before")
+            plt.plot(self.hci_hrs_obs.obs_pl_resample.wavelength, self.hci_hrs_obs.obs_pl_resample.flux, label="pl")
+            plt.plot(self.hci_hrs_obs.obs_st_resample.wavelength, self.hci_hrs_obs.obs_st_resample.flux, label="st+atm")
+            plt.plot(obs_st_at_removed.wavelength, obs_st_at_removed.flux, label="after")
+            plt.plot(obs_st_at_removed.wavelength, obs_st_at_removed.noise, label="noise")
+            plt.plot(atm_tran.wavelength, atm_tran.flux, label="tran")
+            plt.plot(obs_st_at_removed.wavelength, obs_st_at_removed.flux / self.hci_hrs_obs.obs_pl_resample.flux, label="after/pl")
+            plt.plot(self.hci_hrs_obs.obs_st_resample.wavelength, st_tran_free_flux, label="st")
+            #plt.plot(self.hci_hrs_obs.obs_st_resample.wavelength, self.obs_emission_removed.flux / atm_tran.flux, label="pl+st w/o atm")
+            plt.yscale("log")
+            plt.legend()
+            plt.show()
         return(obs_st_at_removed)
 
     def plotObsTemplate(self, plotSkyStAtmRemoved=True, plotTemplate=True, plotStAtm=True, plotObs=False, plotObsSkyRemoved=True):
@@ -278,7 +322,7 @@ class HCI_HRS_Reduction():
             plt.plot(wav_obs, flx_obs_st_at_removed / np.median(flx_obs_st_at_removed), label="Sky Star removed")
         plt.ylim(np.min(flx_st_atm / np.median(flx_st_atm)), 2.0 * np.max(flx_st_atm / np.median(flx_st_atm)))
         plt.legend()
-        plt.show(block=False)
+        plt.show(block=True)
 
     def getSpecChunk(self, wav, flx):
         # get spectrum within wavelength range
