@@ -22,7 +22,7 @@ def readInit(init_file="MdwarfPlanet.init"):
 
 def __main__():
     #initDict = readInit(init_file="SunEarth_4m.init")
-    initDict = readInit(init_file="MagAOX.init")
+    initDict = readInit(init_file="TMT_SuperEarth_N.init")
     wav_min, wav_max, t_exp = np.float32(initDict["wav_min"]), np.float32(initDict["wav_max"]), np.float32(initDict["t_exp"])
     target_pl = Target(distance=np.float32(initDict["distance"]), spec_path=initDict["pl_spec_path"], inclination_deg=np.float32(initDict["pl_inclination_deg"]), rotation_vel=np.float32(initDict["pl_rotation_vel"]), radial_vel=np.float32(initDict["pl_radial_vel"]), spec_reso=np.float32(initDict["spec_reso"]))
     target_st = Target(distance=np.float32(initDict["distance"]), spec_path=initDict["st_spec_path"], inclination_deg=np.float32(initDict["st_inclination_deg"]), rotation_vel=np.float32(initDict["st_rotation_vel"]), radial_vel=np.float32(initDict["st_radial_vel"]), spec_reso=np.float32(initDict["spec_reso"]))
