@@ -23,10 +23,23 @@ class Spectrum():
         else:
             print("Warning: spectrum noise already added")
 
-    def writeSpec(self, file_name="tmp.dat"):
-        with open(file_name, "wb") as f:
+    def writeSpec(self, file_name="tmp.dat",flag_python2=True,flag_append=False):
+        if not flag_append:
+            write_code = "wb"
+        else:
+            write_code = "ab"
+        with open(file_name, write_code) as f:
             for i in np.arange(len(self.wavelength)):
-                f.write("{0:20.8f}{1:20.8e}\n".format(self.wavelength[i], self.flux[i]))
+                if flag_python2 == True:
+                    if np.size(self.noise) == 1:
+                        f.write("{0:20.8f}{1:20.8e}\n".format(self.wavelength[i], self.flux[i]))
+                    else:
+                        f.write("{0:20.8f}{1:20.8e}{2:20.8e}\n".format(self.wavelength[i], self.flux[i], self.noise[i]))
+                else:
+                    if np.size(self.noise) == 1:
+                        f.write(bytes("{0:20.8f}{1:20.8e}\n".format(self.wavelength[i], self.flux[i]), 'UTF-8'))
+                    else:
+                        f.write(bytes("{0:20.8f}{1:20.8e}{2:20.8e}\n".format(self.wavelength[i], self.flux[i], self.noise[i]), 'UTF-8'))
 
     def getSpecNorm(self, num_chunks=10, poly_order=2, emission=False):
         wav = self.wavelength
