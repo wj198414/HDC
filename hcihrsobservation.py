@@ -49,7 +49,7 @@ class HCI_HRS_Observation():
         spec_therm = self.getSpecChunk(self.thermbg.wavelength, self.thermbg.flux)
         self.therm_spec_chunk = Spectrum(spec_therm["Wavelength"], spec_therm["Flux"], spec_reso=self.thermbg.spec_reso)
         self.therm_spec_chunk = self.removeNanInSpecChunk(self.therm_spec_chunk)
-        self.therm_spec_chunk.evenSampling()
+        self.therm_spec_chunk.evenSampling() #Does this actually badly affect the total flux?
         self.therm_spec_chunk.flux = self.thermToPhoton(self.therm_spec_chunk.wavelength, self.therm_spec_chunk.flux, self.t_exp)
         self.therm_spec_chunk.wavelength = self.therm_spec_chunk.wavelength[1:]
         self.therm_total_flux = self.getTotalFlux(self.therm_spec_chunk.flux)
@@ -60,7 +60,6 @@ class HCI_HRS_Observation():
         spec_zodi = self.getSpecChunk(self.zodi.wavelength, self.zodi.flux)
         self.zodi_spec_chunk = Spectrum(spec_zodi["Wavelength"], spec_zodi["Flux"], spec_reso=self.zodi.spec_reso)
         self.zodi_spec_chunk = self.removeNanInSpecChunk(self.zodi_spec_chunk)
-        self.zodi_spec_chunk.evenSampling()
         self.zodi_spec_chunk.flux = self.zodiToPhoton(self.zodi_spec_chunk.wavelength, self.zodi_spec_chunk.flux, self.instrument.telescope_size, self.instrument.throughput, self.t_exp)
         self.zodi_spec_chunk.wavelength = self.zodi_spec_chunk.wavelength[1:]
         self.zodi_total_flux = self.getTotalFlux(self.zodi_spec_chunk.flux)
@@ -74,6 +73,7 @@ class HCI_HRS_Observation():
             spec_atm_tran = self.getSpecChunk(self.atmosphere.spec_tran_wav, self.atmosphere.spec_tran_flx)
             self.atm_tran_spec_chunk = Spectrum(spec_atm_tran["Wavelength"], spec_atm_tran["Flux"], spec_reso=self.star.spec_reso)
             self.atm_tran_spec_chunk = self.removeNanInSpecChunk(self.atm_tran_spec_chunk)
+            self.atm_tran_spec_chunk.flux[np.where(self.atm_tran_spec_chunk.flux < 1e-9)] = 1e-9
             # get the emission spectrum
             spec_atm_radi = self.getSpecChunk(self.atmosphere.spec_radi_wav, self.atmosphere.spec_radi_flx)
             self.atm_radi_spec_chunk = Spectrum(spec_atm_radi["Wavelength"], spec_atm_radi["Flux"], spec_reso=self.star.spec_reso)
@@ -161,14 +161,15 @@ class HCI_HRS_Observation():
             # construct final spectrum with pl_st and radi
             self.obs_spec_resample = Spectrum(self.atm_radi_spec_chunk_resample.wavelength, self.atm_radi_spec_chunk_resample.flux + self.obs_pl_st_resample.flux + self.obs_zodi_resample.flux + self.obs_therm_resample.flux, spec_reso=self.star.spec_reso)
 
-            if 1 == 1:
+            if 1 == 0:
 		plt.figure()
 		plt.plot(self.obs_st_resample.wavelength, self.obs_st_resample.flux*self.instrument.pl_st_contrast, color="b", label="star+atm")
-		plt.plot(self.obs_pl_resample.wavelength, self.obs_pl_resample.flux, color="orange", label="planet+atm")
+		plt.plot(self.obs_pl_resample.wavelength, self.obs_pl_resample.flux, color="orange", label="planet")
 		plt.plot(self.obs_therm_resample.wavelength, self.obs_therm_resample.flux, color="g", label="thermal")
 		plt.plot(self.obs_zodi_resample.wavelength, self.obs_zodi_resample.flux, color="r", label="zodi")
                 plt.plot(self.obs_spec_resample.wavelength, self.obs_spec_resample.flux, color="yellow", label="obs")
                 plt.plot(self.atm_radi_spec_chunk_resample.wavelength, self.atm_radi_spec_chunk_resample.flux, color="black", label="sky")
+                plt.plot(self.obs_atm_tran_resample.wavelength, self.obs_atm_tran_resample.flux, label="tran")
                 plt.yscale("log")
                 plt.legend()
 		plt.show(block=True)
