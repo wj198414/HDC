@@ -36,6 +36,9 @@ class HCI_HRS_Reduction():
             # apply high pass filter to remove low frequency component
             self.template_high_pass = self.template_resample.applyHighPassFilter()
             self.obs_high_pass = self.obs_st_at_removed.applyHighPassFilter()
+            # write spectra
+            self.template_high_pass.writeSpec(file_name="template_high_pass.txt")
+            self.obs_high_pass.writeSpec(file_name="obs_high_pass.txt")
             # cross correlate reduced spectrum and template
             self.ccf_noise_less = self.obs_high_pass.crossCorrelation(self.template_high_pass, spec_mask=None, long_array=False, speed_flag=False)
             vel_pixel = scipy.constants.c / self.hci_hrs_obs.instrument.spec_reso / self.hci_hrs_obs.instrument.pixel_sampling
@@ -57,6 +60,7 @@ class HCI_HRS_Reduction():
             #this is especially important for large wavelength coverage.
             obs_norm = self.getStarNorm(self.hci_hrs_obs.obs_st_resample.flux, long_array=True)
             obs_norm = obs_norm.value / np.median(obs_norm.value) * np.median(self.obs_st_at_removed.flux)
+            #obs_norm = np.median(self.obs_st_at_removed.flux) 
             self.obs_st_at_removed.flux = self.obs_st_at_removed.flux / obs_norm
             self.obs_st_at_removed.noise = self.obs_st_at_removed.noise / obs_norm
             #mask_arr = np.where((self.template_resample.flux / np.nanmedian(self.template_resample.flux)) > 0.99)
@@ -270,13 +274,12 @@ class HCI_HRS_Reduction():
         obs_st_at_removed.wavelength = wav_obs
         if 1 == 0:
 	    #noise = np.sqrt((self.obs_emission_removed.noise / self.obs_emission_removed.flux)**2 + (self.hci_hrs_obs.obs_st_resample.noise / self.hci_hrs_obs.obs_st_resample.flux)**2 + (self.hci_hrs_obs.obs_therm_resample.noise/self.hci_hrs_obs.obs_therm_resample.flux)**2) * self.obs_emission_removed.flux
-	    st_resample_mod = self.hci_hrs_obs.obs_st_resample.copy()
-            st_resample_mod.flux *= self.hci_hrs_obs.instrument.pl_st_contrast
-            noise = np.sqrt(self.obs_emission_removed.noise**2 + self.hci_hrs_obs.calNoise(st_resample_mod)**2)
+	    self.hci_hrs_obs.obs_st_resample.flux *= self.hci_hrs_obs.instrument.pl_st_contrast
+	    noise = np.sqrt(self.obs_emission_removed.noise**2 + self.hci_hrs_obs.calNoise(self.hci_hrs_obs.obs_st_resample)**2)
 	    #obs_st_at_removed.flux = flx_obs / flx_st_atm_norm # neither division or subtraction cannot remove sky transmission and star absorption. This is potentially due to linear interpolation error in previous procedures. More precise interpolation may help but may not work in real observation. Therefore, I cheat here to assume that sky transmission and star absorption can somehow be removed and reveal planet signal, but I don't know exactly how. 
-            #obs_st_at_removed.flux = self.hci_hrs_obs.obs_pl_resample.flux
-            obs_st_at_removed.flux = self.obs_emission_removed.flux - self.hci_hrs_obs.obs_st_resample.flux*self.hci_hrs_obs.instrument.pl_st_contrast # this is not correct, obs_st_resample has already been multiplied by pl_st_contrast, see a few lines above
-            obs_st_at_removed.noise = None
+	    #obs_st_at_removed.flux = self.hci_hrs_obs.obs_pl_resample.flux
+	    obs_st_at_removed.flux = self.obs_emission_removed.flux - self.hci_hrs_obs.obs_st_resample.flux*self.hci_hrs_obs.instrument.pl_st_contrast # this is not correct, obs_st_resample has already been multiplied by pl_st_contrast, see a few lines above
+	    obs_st_at_removed.noise = None
 	    obs_st_at_removed.addNoise(np.abs(noise))
         else:
             self.hci_hrs_obs.obs_st_resample.flux *= self.hci_hrs_obs.instrument.pl_st_contrast # obs_st_resample is now attenuated by coronagraph
