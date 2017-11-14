@@ -1,10 +1,6 @@
 
 *.pyc
 *.dat
-<<<<<<< HEAD
-*.fits
-*.init
-=======
 *.init
 *.fits
->>>>>>> develop_cc
+*.old

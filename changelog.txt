@@ -1,5 +1,39 @@
 hci_hrs_sim.py changelog
 
+10/27/17:
+
+Carl Coker
+
+-Fixed bug Ji pointed out in removeSkyTransmissionStar()
+    -Planet-star contrast was double-counted in subtraction
+    -This change will eventually be overwritten by Ji's fix
+
+10/26/17:
+
+Carl Coker
+
+-Changed exozodi PSF aperture to circular
+	-This results in a large speed penalty when using the entire wavelength range
+	-Need to either split out this step or make sure to use only the relevant cubes
+		for each spectral line we want to simulate
+	-Doing this for the full range also uses an enormous amount of virtual memory -
+		need at least 32 GB of RAM to do it!
+
+10/25/17:
+
+Carl Coker
+
+-Fixed up some comments
+-All spectral chunks in HCI_HRS_Observation are now evenly sampled
+
+10/24/17:
+
+Carl Coker
+
+-Distance units in ZodiTarget now correct, fixing calculation of N_pix
+-Added code to automatically iterate over all Haystacks cubes present
+    -Fixing some sampling issues now
+
 10/18/17:
 
 Carl Coker
