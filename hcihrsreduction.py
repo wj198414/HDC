@@ -52,29 +52,29 @@ class HCI_HRS_Reduction():
             result = self.simulateMultiMeasurement(num_sim=100, flag_plot=False, ground_flag=True, speckle_flag=self.speckle_flag, spec_mask=None, long_array=False, speed_flag=False)
         else:
             #self.obs_emission_removed = self.hci_hrs_obs.obs_spec_resample.copy()
-            self.obs_emission_removed = self.removeSkyEmission(flag_plot=True)
-            self.obs_st_at_removed = self.removeSkyTransmissionStar(flag_plot=True)            
+            self.obs_emission_removed = self.removeSkyEmission(flag_plot=False)
+            self.obs_st_at_removed = self.removeSkyTransmissionStar(flag_plot=False)            
             #obs_norm = self.obs_st_at_removed.getSpecNorm(num_chunks=20, poly_order=3)
             print(str(datetime.now()))
             #Normalization is to make sure that the input spectrum for the CCF is flat; 
             #this is especially important for large wavelength coverage.
             obs_norm = self.getStarNorm(self.hci_hrs_obs.obs_st_resample.flux, long_array=True)
-            obs_norm = obs_norm.value / np.median(obs_norm.value) * np.median(self.obs_st_at_removed.flux)
+            obs_norm = obs_norm.value / np.median(obs_norm.value)# * np.median(self.obs_st_at_removed.flux)
             #obs_norm = np.median(self.obs_st_at_removed.flux) 
             self.obs_st_at_removed.flux = self.obs_st_at_removed.flux / obs_norm
             self.obs_st_at_removed.noise = self.obs_st_at_removed.noise / obs_norm
             #mask_arr = np.where((self.template_resample.flux / np.nanmedian(self.template_resample.flux)) > 0.99)
             mask_arr = np.where((self.template_resample.flux / np.nanmedian(self.template_resample.flux)) > 1e9)
-            if 1 == 1:
+            if 1 == 0:
 		#plt.errorbar(self.obs_st_at_removed.wavelength, self.obs_st_at_removed.flux, yerr=self.obs_st_at_removed.noise)
 		plt.figure()
 		plt.errorbar(self.obs_st_at_removed.wavelength, self.obs_st_at_removed.flux, self.obs_st_at_removed.noise)
 		#plt.plot(self.template_resample.wavelength, self.template_resample.flux / np.median(self.template_resample.flux))
-		plt.plot(self.template_resample.wavelength[mask_arr], self.template_resample.flux[mask_arr] / np.median(self.template_resample.flux[mask_arr]))
-		plt.plot(self.obs_st_at_removed.wavelength[mask_arr], self.obs_st_at_removed.flux[mask_arr], "b.")
+		#plt.plot(self.template_resample.wavelength[mask_arr], self.template_resample.flux[mask_arr] / np.median(self.template_resample.flux[mask_arr]))
+		plt.plot(self.obs_st_at_removed.wavelength[mask_arr], self.obs_st_at_removed.flux[mask_arr], "r.")
 		plt.show(block=True)
             if self.speckle_flag:
-                self.cutoff_value = self.hci_hrs_obs.instrument.spec_reso / 6.0
+                self.cutoff_value = np.min(self.hci_hrs_obs.instrument.spec_reso / 6.0, 100.0)
                 self.template_resample = self.template_resample.applyHighPassFilter(cutoff=self.cutoff_value)
                 self.ccf_noise_less = self.obs_st_at_removed.applyHighPassFilter(cutoff=self.cutoff_value).crossCorrelation(self.template_resample, spec_mask=mask_arr, long_array=False, speed_flag=False)
             else:
@@ -85,8 +85,8 @@ class HCI_HRS_Reduction():
             result = self.simulateSingleMeasurement(ground_flag=False, plot_flag=True, speckle_flag=self.speckle_flag, spec_mask=mask_arr, long_array=False, speed_flag=False)
             print(result)
             self.writeLog(result)
-            #result = self.simulateMultiMeasurement(num_sim=100, ground_flag=False, speckle_flag=self.speckle_flag, spec_mask=mask_arr, long_array=False, speed_flag=True)
-            result = self.simulateMultiMeasurement_2(num_sim=100, ground_flag=False, speckle_flag=self.speckle_flag, spec_mask=mask_arr, long_array=False, speed_flag=False)
+            #result = self.simulateMultiMeasurement_2(num_sim=100, ground_flag=False, speckle_flag=self.speckle_flag, spec_mask=mask_arr, long_array=False, speed_flag=False)
+            result = self.simulateMultiMeasurement(num_sim=100, flag_plot=False, ground_flag=False, speckle_flag=self.speckle_flag, spec_mask=mask_arr, long_array=False, speed_flag=False)
 
         if self.save_flag:
             self.saveObject()            

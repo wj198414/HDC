@@ -1,5 +1,13 @@
 hci_hrs_sim.py changelog
 
+11/16/17
+
+Ji Wang
+
+-obs_norm is now normalized to 1
+
+-change high pass filter value to be < 100
+
 11/14/17:
 
 Ji Wang
