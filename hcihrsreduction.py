@@ -296,6 +296,9 @@ class HCI_HRS_Reduction():
             atm_tran = self.hci_hrs_obs.obs_atm_tran_resample.copy()
             st_tran_free_flux = self.hci_hrs_obs.obs_st_resample.flux / atm_tran.flux
             obs_st_at_removed.flux = (self.obs_emission_removed.flux / atm_tran.flux) - st_tran_free_flux
+            # set deep transmission region to median 
+            idx = np.where(atm_tran.flux < 1e-1)
+            obs_st_at_removed.flux[idx] = np.median(obs_st_at_removed.flux)
             obs_st_at_removed.noise = None
             obs_st_at_removed.addNoise(np.abs(noise))
         else:
