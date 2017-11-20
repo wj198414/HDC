@@ -63,6 +63,11 @@ class HCI_HRS_Reduction():
             #obs_norm = np.median(self.obs_st_at_removed.flux) 
             self.obs_st_at_removed.flux = self.obs_st_at_removed.flux / obs_norm
             self.obs_st_at_removed.noise = self.obs_st_at_removed.noise / obs_norm
+            if 1 == 0:
+                plt.plot(self.hci_hrs_obs.obs_st_resample.flux, label="st")
+                plt.plot(self.obs_st_at_removed.flux, label="after")
+                plt.legend()
+                plt.show()  
             #mask_arr = np.where((self.template_resample.flux / np.nanmedian(self.template_resample.flux)) > 0.99)
             mask_arr = np.where((self.template_resample.flux / np.nanmedian(self.template_resample.flux)) > 1e9)
             if 1 == 0:
@@ -74,7 +79,7 @@ class HCI_HRS_Reduction():
 		plt.plot(self.obs_st_at_removed.wavelength[mask_arr], self.obs_st_at_removed.flux[mask_arr], "r.")
 		plt.show(block=True)
             if self.speckle_flag:
-                self.cutoff_value = np.min(self.hci_hrs_obs.instrument.spec_reso / 6.0, 100.0)
+                self.cutoff_value = np.min([self.hci_hrs_obs.instrument.spec_reso / 6.0, 100.0])
                 self.template_resample = self.template_resample.applyHighPassFilter(cutoff=self.cutoff_value)
                 self.ccf_noise_less = self.obs_st_at_removed.applyHighPassFilter(cutoff=self.cutoff_value).crossCorrelation(self.template_resample, spec_mask=mask_arr, long_array=False, speed_flag=False)
             else:

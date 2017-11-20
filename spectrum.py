@@ -153,9 +153,9 @@ class Spectrum():
 
     def copy(self):
         # make a copy of a spectrum object
-        spectrum_new = Spectrum(self.wavelength, self.flux, spec_reso=self.spec_reso)
+        spectrum_new = Spectrum(self.wavelength.copy(), self.flux.copy(), spec_reso=self.spec_reso+0.0)
         if self.noise != None:
-            spectrum_new.noise = self.noise
+            spectrum_new.noise = self.noise.copy()
         return(spectrum_new)
 
     def pltSpec(self, **kwargs):
