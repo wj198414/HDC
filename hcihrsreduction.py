@@ -145,7 +145,7 @@ class HCI_HRS_Reduction():
             ccf = spec.crossCorrelation(self.template_high_pass, **kwargs)
         else:
             if speckle_flag:
-                spec = self.obs_st_at_removed.generateNoisySpec(speckle_noise=True, star_flux=np.median(self.hci_hrs_obs.obs_st_resample)).applyHighPassFilter(cutoff=self.cutoff_value) # self.hci_hrs_obs.obs_st_resample is after starlight suppression 
+                spec = self.obs_st_at_removed.generateNoisySpec(speckle_noise=True, star_flux=np.median(self.hci_hrs_obs.obs_st_resample.flux)).applyHighPassFilter(cutoff=self.cutoff_value) # self.hci_hrs_obs.obs_st_resample is after starlight suppression 
                 ccf = spec.crossCorrelation(self.template_resample, **kwargs)
             else:
                 spec = self.obs_st_at_removed.generateNoisySpec(speckle_noise=False)
