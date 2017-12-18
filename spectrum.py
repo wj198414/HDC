@@ -99,7 +99,7 @@ class Spectrum():
         flx_new[idx] = 0.1
         return(flx_new)
 
-    def generateNoisySpec(self, speckle_noise=False):
+    def generateNoisySpec(self, speckle_noise=False, star_flux=1.0):
         spec = self.copy()
         flx = self.flux
         flx_new = np.zeros(np.shape(flx))
@@ -119,7 +119,8 @@ class Spectrum():
 
         if speckle_noise:
             flx_speckle = self.simSpeckleNoise(np.min(spec.wavelength), np.max(spec.wavelength), 0.1, spec.wavelength)
-            spec.flux = spec.flux * flx_speckle
+            #spec.flux = spec.flux * flx_speckle
+            spec.flux = spec.flux + star_flux * flx_speckle
 
         return(spec)
 
@@ -301,6 +302,7 @@ class Spectrum():
                     flx[i] = np.mean(self.flux[i*pixel_to_sum:(i+1)*pixel_to_sum])
                 self.wavelength = wav
                 self.flux = flx
+        self.spec_reso = rpower
         return self
 
     def rotational_blur(self, rot_vel=3e4):
