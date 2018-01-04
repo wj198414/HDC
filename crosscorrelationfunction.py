@@ -52,6 +52,22 @@ class CrossCorrelationFunction():
         centroid = (vel[mini:maxi]*weight).sum()/weight.sum()
         return centroid
 
+    def writeCCF(self, file_name="tmp.dat", python2=True):
+        with open(file_name, "wb") as f:
+            if not python2:
+                for i in np.arange(len(self.vel)):
+                    if None is None:
+                        f.write(bytes("{0:20.8e}{1:20.8e}\n".format(self.vel[i], self.ccf[i]), 'UTF-8'))
+                    else:
+                        f.write(bytes("{0:20.8e}{1:20.8e}{2:20.8e}\n".format(self.vel[i], self.ccf[i], self.un[i]), 'UTF-8'))
+            else:
+                for i in np.arange(len(self.vel)):
+                    if None is None:
+                        f.write("{0:20.8e}{1:20.8e}\n".format(self.vel[i], self.ccf[i]))
+                    else:
+                        f.write("{0:20.8e}{1:20.8e}{2:20.8e}\n".format(self.vel[i], self.ccf[i], self.un[i]))
+
+
     def calcSNRrms(self, peak=None):
         cc = self.ccf
 
@@ -81,7 +97,20 @@ class CrossCorrelationFunction():
         num = len(cc)
         snr = np.max([cc[ind_max] / np.std(cc_subtracted[0:int(num / 4.0)]), cc[ind_max] / np.std(cc_subtracted[-int(num / 4.0):-1])])
         if not (peak is None):
-            snr = np.max([peak / np.std(cc_subtracted[0:int(num / 4.0)]), peak / np.std(cc_subtracted[-int(num / 4.0):-1])])
+            ccf_left = cc_subtracted[0:int(num / 4.0)]
+            ccf_right = cc_subtracted[-int(num / 4.0):-1]
+            ccf_left_non_zero = ccf_left[np.where(np.abs(ccf_left)>peak*1e-9)]
+            ccf_right_non_zero = ccf_right[np.where(np.abs(ccf_right)>peak*1e-9)]
+            if np.size(ccf_left_non_zero) > 5:
+                std_left = np.std(ccf_left_non_zero)
+            else:
+                std_left = 1e99
+            if np.size(ccf_right_non_zero) > 5:
+                std_right = np.std(ccf_right_non_zero)
+            else:
+                std_right = 1e99
+            #snr = np.max([peak / np.std(cc_subtracted[0:int(num / 4.0)]), peak / np.std(cc_subtracted[-int(num / 4.0):-1])])
+            snr = np.min([peak / std_left, peak / std_right])
         return(snr)
 
     def calcSNRnoiseLess(self, ccf_noise_less):

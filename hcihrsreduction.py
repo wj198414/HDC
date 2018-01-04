@@ -5,14 +5,14 @@ from datetime import datetime
 from crosscorrelationfunction import CrossCorrelationFunction
 
 class HCI_HRS_Reduction():
-    def __init__(self, hci_hrs_obs, template, save_flag=False, obj_tag="a", template_tag="b", speckle_flag=False, resolution_elements_in_ccf=1e3):
+    def __init__(self, hci_hrs_obs, template, save_flag=False, obj_tag="a", template_tag="b", speckle_flag=False, resolution_elements_in_ccf=5e2):
         self.hci_hrs_obs = hci_hrs_obs
         self.template = template
         self.save_flag=save_flag
         self.obj_tag = obj_tag
         self.template_tag = template_tag
         self.speckle_flag = speckle_flag
-        self.resolution_elements_in_ccf = resolution_elements_in_ccf
+        self.resolution_elements_in_ccf = np.max([hci_hrs_obs.star.spec_reso/128e2*resolution_elements_in_ccf, hci_hrs_obs.star.spec_reso/64e2*resolution_elements_in_ccf])        
         self.execute()
 
     def execute(self):
@@ -23,9 +23,11 @@ class HCI_HRS_Reduction():
         self.template = self.removeNanInSpecChunk(self.template)
         # rotational and spectral broaden template and resample template to instrument grid
         self.template.resampleSpec(self.hci_hrs_obs.star_spec_chunk.wavelength)
+        self.template_R1000 = self.template.copy().spectral_blur(rpower=1e3, quick_blur=False)
         #self.template.rotational_blur(rot_vel=self.hci_hrs_obs.planet.rotation_vel)
         self.template.spectral_blur(rpower=self.template.spec_reso, quick_blur=False)
         self.template_resample = self.template.resampleSpectoSpectrograph(pixel_sampling=self.hci_hrs_obs.instrument.pixel_sampling)
+        self.template_R1000 = self.template_R1000.resampleSpec(self.template_resample.wavelength)
         if self.hci_hrs_obs.atmosphere != None:
             # remove sky emission with spectrum obteined from the sky fiber
             self.obs_emission_removed = self.removeSkyEmission(flag_plot=True)
@@ -68,8 +70,8 @@ class HCI_HRS_Reduction():
                 plt.plot(self.obs_st_at_removed.flux, label="after")
                 plt.legend()
                 plt.show()  
-            #mask_arr = np.where((self.template_resample.flux / np.nanmedian(self.template_resample.flux)) > 0.99)
-            mask_arr = np.where((self.template_resample.flux / np.nanmedian(self.template_resample.flux)) > 1e9)
+            mask_arr = np.where((self.template_R1000.flux / np.nanmedian(self.template_R1000.flux)) > 0.99)
+            #mask_arr = np.where((self.template_resample.flux / np.nanmedian(self.template_resample.flux)) > 1e9)
             if 1 == 0:
 		#plt.errorbar(self.obs_st_at_removed.wavelength, self.obs_st_at_removed.flux, yerr=self.obs_st_at_removed.noise)
 		plt.figure()
@@ -81,6 +83,10 @@ class HCI_HRS_Reduction():
             if self.speckle_flag:
                 #self.cutoff_value = np.min([self.hci_hrs_obs.instrument.spec_reso / 6.0, 100.0])
                 self.cutoff_value = 100.0
+                if self.cutoff_value < self.hci_hrs_obs.instrument.spec_reso:
+                    self.cutoff_value = self.cutoff_value 
+                else:
+                    self.cutoff_value = self.hci_hrs_obs.instrument.spec_reso / 2.0
                 self.template_resample = self.template_resample.applyHighPassFilter(cutoff=self.cutoff_value)
                 self.ccf_noise_less = self.obs_st_at_removed.applyHighPassFilter(cutoff=self.cutoff_value).crossCorrelation(self.template_resample, spec_mask=mask_arr, long_array=False, speed_flag=False)
             else:
@@ -145,7 +151,8 @@ class HCI_HRS_Reduction():
             ccf = spec.crossCorrelation(self.template_high_pass, **kwargs)
         else:
             if speckle_flag:
-                spec = self.obs_st_at_removed.generateNoisySpec(speckle_noise=True, star_flux=np.median(self.hci_hrs_obs.obs_st_resample.flux)).applyHighPassFilter(cutoff=self.cutoff_value) # self.hci_hrs_obs.obs_st_resample is after starlight suppression 
+                spec = self.obs_st_at_removed.generateNoisySpec(speckle_noise=True, star_flux=np.median(self.hci_hrs_obs.obs_st_resample.flux)) 
+                spec = spec.applyHighPassFilter(cutoff=self.cutoff_value) # self.hci_hrs_obs.obs_st_resample is after starlight suppression
                 ccf = spec.crossCorrelation(self.template_resample, **kwargs)
             else:
                 spec = self.obs_st_at_removed.generateNoisySpec(speckle_noise=False)
