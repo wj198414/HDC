@@ -3,7 +3,6 @@ import astropy.io.fits as pyfits
 import astropy.units as u
 import os
 from spectrum import Spectrum
-from scipy import interpolate
 
 #This class carries the exozodiacal background for the observation.  The relevant portions of the interface are the same as for Target().
 

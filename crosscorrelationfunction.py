@@ -1,21 +1,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import astropy.io.fits as pyfits
-import astropy.io.ascii as ascii
-import scipy.constants
 import pickle
-from scipy import signal
+import scipy.constants
+import astropy.io.fits as pyfits
 from astropy import units as u
 from astropy import constants as c
-import numpy.fft as fft
-from mpl_toolkits.mplot3d import proj3d
-from mpl_toolkits.mplot3d import Axes3D
-from matplotlib.patches import FancyArrowPatch
-from scipy import interpolate
-import time
-import scipy.interpolate
-import scipy.fftpack as fp
-from datetime import datetime
 
 class CrossCorrelationFunction():
     def __init__(self, vel, ccf):

@@ -235,7 +235,7 @@ def readInit(init_file="MdwarfPlanet.init"):
 
 def __main__():
     #initDict = readInit(init_file="MdwarfPlanet.init")
-    initDict = readInit(init_file="TMT_SuperEarth_N.init")
+    initDict = readInit(init_file="SunEarth_4m.init")
     if initDict["template_type"] == "thermal":
         print("Thermal Spectrum")
         target_st = Target(distance=np.float32(initDict["distance"]), spec_path=initDict["st_template_spec_path"], inclination_deg=np.float32(initDict["st_inclination_deg"]), rotation_vel=np.float32(initDict["st_rotation_vel"]), radial_vel=np.float32(initDict["st_radial_vel"]), spec_reso=np.float32(initDict["spec_reso"]))
@@ -312,25 +312,25 @@ def __main__():
         pl_illumination = np.float32(initDict["pl_illumination"])
         hci_hrs_name = "{0:06.3f}_{1:06.3}".format(wav_min, wav_max)
         obj_tag = initDict["obj_tag"]
-        fits_dir = "/scr/jwang/hci_hds/OO_hci_hrs/fits_dir/"
+        #fits_dir = "/scr/jwang/hci_hds/OO_hci_hrs/fits_dir/"
         hdu = pyfits.open(initDict["st_template_spec_path"])
         hdu[1].data["Wavelength"][0:-1] = np.nan
         hdu[1].data["Flux"][0:-1] = np.nan
 
         hdu[1].data["Wavelength"][0:len(spec_st.wavelength)] = spec_st.wavelength
         hdu[1].data["Flux"][0:len(spec_st.wavelength)] = spec_st.flux * spec_pl.flux * pl_illumination * (rp / sma)**2 / 1.0
-        hdu.writeto(fits_dir+obj_tag+"."+hci_hrs_name+"."+"template.planet.fits", clobber=True)
-        hdu.writeto("template.planet.fits", clobber=True)
+        #hdu.writeto(fits_dir+obj_tag+"."+hci_hrs_name+"."+"template.planet.fits", clobber=True)
+        hdu.writeto("template.planet.fits", overwrite=True)
 
         hdu[1].data["Wavelength"][0:len(spec_st.wavelength)] = spec_st.wavelength
         hdu[1].data["Flux"][0:len(spec_st.wavelength)] = spec_st.flux 
-        hdu.writeto(fits_dir+obj_tag+"."+hci_hrs_name+"."+"template.star.fits", clobber=True)
-        hdu.writeto("template.star.fits", clobber=True)
+        #hdu.writeto(fits_dir+obj_tag+"."+hci_hrs_name+"."+"template.star.fits", clobber=True)
+        hdu.writeto("template.star.fits", overwrite=True)
 
         hdu[1].data["Wavelength"][0:len(spec_mol.wavelength)] = spec_mol.wavelength
         hdu[1].data["Flux"][0:len(spec_mol.wavelength)] = spec_mol.flux 
-        hdu.writeto(fits_dir+obj_tag+"."+hci_hrs_name+"."+"template."+initDict["template_tag"]+".fits", clobber=True)
-        hdu.writeto("template."+initDict["template_tag"]+".fits", clobber=True)
+        #hdu.writeto(fits_dir+obj_tag+"."+hci_hrs_name+"."+"template."+initDict["template_tag"]+".fits", clobber=True)
+        hdu.writeto("template."+initDict["template_tag"]+".fits", overwrite=True)
     elif initDict["template_type"] == "reflection_giants":
         print("Reflection Spectrum For Giants")
         target_st = Target(distance=np.float32(initDict["distance"]), spec_path=initDict["st_template_spec_path"], inclination_deg=np.float32(initDict["st_inclination_deg"]), rotation_vel=np.float32(initDict["st_rotation_vel"]), radial_vel=np.float32(initDict["st_radial_vel"]), spec_reso=np.float32(initDict["spec_reso"]))
@@ -367,24 +367,25 @@ def __main__():
         pl_illumination = np.float32(initDict["pl_illumination"])
         hci_hrs_name = "{0:06.3f}_{1:06.3}".format(wav_min, wav_max)
         obj_tag = initDict["obj_tag"]
-        fits_dir = "/scr/jwang/hci_hds/OO_hci_hrs/fits_dir/"
+        #fits_dir = "/scr/jwang/hci_hds/OO_hci_hrs/fits_dir/"
         hdu = pyfits.open(initDict["st_template_spec_path"])
         hdu[1].data["Wavelength"][0:-1] = np.nan
         hdu[1].data["Flux"][0:-1] = np.nan
 
         hdu[1].data["Wavelength"][0:len(spec_st.wavelength)] = spec_st.wavelength
         hdu[1].data["Flux"][0:len(spec_st.wavelength)] = spec_st.flux * spec_pl.flux * pl_illumination * (rp / sma)**2 / 1.0
-        hdu.writeto(fits_dir+obj_tag+"."+hci_hrs_name+"."+"template.planet.fits", clobber=True)
-        hdu.writeto("template.planet.fits", clobber=True)
+        #hdu.writeto(fits_dir+obj_tag+"."+hci_hrs_name+"."+"template.planet.fits", clobber=True)
+        hdu.writeto("template.planet.fits", overwrite=True)
 
         hdu[1].data["Wavelength"][0:len(spec_st.wavelength)] = spec_st.wavelength
         hdu[1].data["Flux"][0:len(spec_st.wavelength)] = spec_st.flux 
-        hdu.writeto(fits_dir+obj_tag+"."+hci_hrs_name+"."+"template.star.fits", clobber=True)
-        hdu.writeto("template.star.fits", clobber=True)
+        #hdu.writeto(fits_dir+obj_tag+"."+hci_hrs_name+"."+"template.star.fits", clobber=True)
+        hdu.writeto("template.star.fits", overwrite=True)
 
         hdu[1].data["Wavelength"][0:len(spec_mol.wavelength)] = spec_mol.wavelength
         hdu[1].data["Flux"][0:len(spec_mol.wavelength)] = spec_mol.flux 
-        hdu.writeto(fits_dir+obj_tag+"."+hci_hrs_name+"."+"template."+initDict["template_tag"]+".fits", clobber=True)
+        #hdu.writeto(fits_dir+obj_tag+"."+hci_hrs_name+"."+"template."+initDict["template_tag"]+".fits", clobber=True)
+        hdu.writeto("template."+initDict["template_tag"]+".fits", overwrite=True)
     else:
         print("template_type in init file has to be thermal or reflection")
 

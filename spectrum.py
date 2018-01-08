@@ -1,10 +1,9 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.fft as fft
 import scipy.constants
 import pickle
 from scipy import signal
-import numpy.fft as fft
-from scipy import interpolate
 import scipy.interpolate
 import scipy.fftpack as fp
 from crosscorrelationfunction import CrossCorrelationFunction
