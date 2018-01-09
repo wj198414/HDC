@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.constants
+import scipy.stats
 from datetime import datetime
 from crosscorrelationfunction import CrossCorrelationFunction
 
@@ -94,7 +95,7 @@ class HCI_HRS_Reduction():
             vel_pixel = scipy.constants.c / self.hci_hrs_obs.instrument.spec_reso / self.hci_hrs_obs.instrument.pixel_sampling
             self.ccf_noise_less = self.ccf_noise_less.getCCFchunk(vmin=-self.resolution_elements_in_ccf*vel_pixel+self.hci_hrs_obs.planet.radial_vel, vmax=self.resolution_elements_in_ccf*vel_pixel+self.hci_hrs_obs.planet.radial_vel)
             self.ccf_peak = self.ccf_noise_less.calcPeak()
-            result = self.simulateSingleMeasurement(ground_flag=False, plot_flag=True, speckle_flag=self.speckle_flag, spec_mask=mask_arr, long_array=False, speed_flag=False)
+            result = self.simulateSingleMeasurement(ground_flag=False, plot_flag=False, speckle_flag=self.speckle_flag, spec_mask=mask_arr, long_array=False, speed_flag=False)
             print(result)
             self.writeLog(result)
             #result = self.simulateMultiMeasurement_2(num_sim=100, ground_flag=False, speckle_flag=self.speckle_flag, spec_mask=mask_arr, long_array=False, speed_flag=False)
@@ -153,12 +154,13 @@ class HCI_HRS_Reduction():
             if speckle_flag:
                 spec = self.obs_st_at_removed.generateNoisySpec(speckle_noise=True, star_flux=np.median(self.hci_hrs_obs.obs_st_resample.flux)) 
                 spec = spec.applyHighPassFilter(cutoff=self.cutoff_value) # self.hci_hrs_obs.obs_st_resample is after starlight suppression
+                spec = spec.applyHighPassFilter(cutoff=self.hci_hrs_obs.instrument.spec_reso*0.5, pass_type='low')
                 ccf = spec.crossCorrelation(self.template_resample, **kwargs)
             else:
                 spec = self.obs_st_at_removed.generateNoisySpec(speckle_noise=False)
                 ccf = spec.crossCorrelation(self.template_resample, **kwargs)
         if plot_flag:
-            plt.plot(self.obs_st_at_removed.wavelength, self.obs_st_at_removed.flux / np.max(self.obs_st_at_removed.flux), alpha=0.5, label="obs")
+            plt.plot(self.obs_st_at_removed.wavelength, self.obs_st_at_removed.flux / np.median(self.obs_st_at_removed.flux), alpha=0.5, label="obs")
             if ground_flag:
                 plt.plot(self.template_high_pass.wavelength, self.template_high_pass.flux / np.max(self.template_high_pass.flux) , alpha=0.5, label="temp")
             else:
@@ -209,7 +211,11 @@ class HCI_HRS_Reduction():
             idx = np.where(info_arr[2,:] == 1)
             SNR_RMS_mean = 0.0
             SNR_RMS_std = 0.0
-            SNR = np.transpose(info_arr[0,idx]).flatten()
+            if 1 == 0:
+                SNR = np.transpose(info_arr[0,idx]).flatten() # SNR_RMS
+            else:
+                SNR = np.transpose(info_arr[1,idx]).flatten() # CCF _peak
+                SNR = SNR / (scipy.stats.iqr(SNR, rng=(16,84)) / 2.0) # 16 to 84 percentile covers 2-sigma 
             if flag_plot:
                 plt.hist(SNR, alpha=0.3, label="R ={0:4.0f}".format(self.hci_hrs_obs.instrument.spec_reso))
                 plt.show()

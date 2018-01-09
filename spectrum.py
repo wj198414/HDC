@@ -137,7 +137,7 @@ class Spectrum():
 
         return(self)
 
-    def applyHighPassFilter(self, order = 5, cutoff = 100.0):
+    def applyHighPassFilter(self, order = 5, cutoff = 100.0, pass_type="high"):
         # cutoff is number of sampling per 1 micron, so 100 means 0.01 micron resolution, about R = 100 at 1 micron
         x = self.wavelength
         y = self.flux
@@ -145,7 +145,8 @@ class Spectrum():
         fs = 1.0 / np.median(x[1:-1] - x[0:-2])
         nyq = 0.5 * fs
         normal_cutoff = cutoff / nyq
-        b, a = scipy.signal.butter(order, normal_cutoff, btype='high', analog=False)
+        #print("normal_cutoff = ", normal_cutoff)
+        b, a = scipy.signal.butter(order, normal_cutoff, btype=pass_type, analog=False)
         yy = scipy.signal.filtfilt(b, a, y)
         spec = Spectrum(x, yy, spec_reso=self.spec_reso)
         if n is not None:
@@ -203,7 +204,7 @@ class Spectrum():
         self.flux = flx
         return self
 
-    def crossCorrelation(self, template, spec_mask=None, long_array=False, speed_flag=False, flag_plot=False):
+    def crossCorrelation(self, template, spec_mask=None, long_array=False, speed_flag=False, flag_plot=False, flag_crop=True):
         # positive peak means spectrum is blue shifted with respect to template
         # do not recommend long_array option. It does not produce the same SNR as the non-long_array option. 
         if not long_array:
@@ -217,7 +218,11 @@ class Spectrum():
             if spec_mask != None:
                 flx[spec_mask] = np.nanmedian(flx)
                 flx_temp[spec_mask] = np.nanmedian(flx_temp)
-
+            if flag_crop:
+                num_crop = int(len(wav) * 0.05)
+                wav = wav[num_crop:-num_crop]
+                flx = flx[num_crop:-num_crop]
+                flx_temp = flx_temp[num_crop:-num_crop]
             if speed_flag:
                 num_pixels = len(wav)
                 power_2 = np.ceil(np.log10(num_pixels + 0.0) / np.log10(2.0))
