@@ -28,7 +28,7 @@ class HCI_HRS_Reduction():
         self.template.spectral_blur(rpower=self.template.spec_reso, quick_blur=False)
         self.template_resample = self.template.resampleSpectoSpectrograph(pixel_sampling=self.hci_hrs_obs.instrument.pixel_sampling)
         self.template_R1000 = self.template_R1000.resampleSpec(self.template_resample.wavelength)
-        if self.hci_hrs_obs.atmosphere != None:
+        if self.hci_hrs_obs.atmosphere is not None:
             # remove sky emission with spectrum obteined from the sky fiber
             self.obs_emission_removed = self.removeSkyEmission(flag_plot=True)
             # remove star and atmospheric transmission with spectrum obtained from the star fiber
@@ -158,6 +158,7 @@ class HCI_HRS_Reduction():
                 spec = self.obs_st_at_removed.generateNoisySpec(speckle_noise=False)
                 ccf = spec.crossCorrelation(self.template_resample, **kwargs)
         if plot_flag:
+            plt.figure()
             plt.plot(self.obs_st_at_removed.wavelength, self.obs_st_at_removed.flux / np.max(self.obs_st_at_removed.flux), alpha=0.5, label="obs")
             if ground_flag:
                 plt.plot(self.template_high_pass.wavelength, self.template_high_pass.flux / np.max(self.template_high_pass.flux) , alpha=0.5, label="temp")
@@ -263,21 +264,21 @@ class HCI_HRS_Reduction():
         return([peak_correction_rate, SNR_RMS_mean, SNR_RMS_std, SNR_vs_NoiseLess_mean, SNR_vs_NoiseLess_std])
 
     def removeSkyEmission(self, flag_plot=False):
-        if self.hci_hrs_obs.atmosphere != None: 
-	    spec = self.hci_hrs_obs.obs_spec_resample.copy()
-	    spec.wavelength = self.hci_hrs_obs.atm_radi_spec_chunk_resample.wavelength
-	    spec.flux = self.hci_hrs_obs.obs_spec_resample.flux - self.hci_hrs_obs.atm_radi_spec_chunk_resample.flux - self.hci_hrs_obs.obs_therm_resample.flux
-	    spec.noise = None
-	    spec.addNoise(np.sqrt(self.hci_hrs_obs.obs_spec_resample.noise**2 + self.hci_hrs_obs.atm_radi_spec_chunk_resample.noise**2 + self.hci_hrs_obs.obs_therm_resample.noise**2))
-	    if flag_plot:
-		plt.plot(self.hci_hrs_obs.obs_spec_resample.wavelength, self.hci_hrs_obs.obs_spec_resample.flux, label="obs")
-		plt.plot(self.hci_hrs_obs.atm_radi_spec_chunk_resample.wavelength, self.hci_hrs_obs.atm_radi_spec_chunk_resample.flux, label="sky")
-		plt.plot(self.hci_hrs_obs.obs_therm_resample.wavelength, self.hci_hrs_obs.obs_therm_resample.flux, label="therm")
-		plt.plot(spec.wavelength, spec.flux, label="after")
-		plt.plot(spec.wavelength, spec.noise, label="noise")
-		plt.yscale("log")
-		plt.legend()
-		plt.show()
+        if self.hci_hrs_obs.atmosphere is not None: 
+            spec = self.hci_hrs_obs.obs_spec_resample.copy()
+            spec.wavelength = self.hci_hrs_obs.atm_radi_spec_chunk_resample.wavelength
+            spec.flux = self.hci_hrs_obs.obs_spec_resample.flux - self.hci_hrs_obs.atm_radi_spec_chunk_resample.flux - self.hci_hrs_obs.obs_therm_resample.flux
+            spec.noise = None
+            spec.addNoise(np.sqrt(self.hci_hrs_obs.obs_spec_resample.noise**2 + self.hci_hrs_obs.atm_radi_spec_chunk_resample.noise**2 + self.hci_hrs_obs.obs_therm_resample.noise**2))
+            if flag_plot:
+                plt.plot(self.hci_hrs_obs.obs_spec_resample.wavelength, self.hci_hrs_obs.obs_spec_resample.flux, label="obs")
+                plt.plot(self.hci_hrs_obs.atm_radi_spec_chunk_resample.wavelength, self.hci_hrs_obs.atm_radi_spec_chunk_resample.flux, label="sky")
+                plt.plot(self.hci_hrs_obs.obs_therm_resample.wavelength, self.hci_hrs_obs.obs_therm_resample.flux, label="therm")
+                plt.plot(spec.wavelength, spec.flux, label="after")
+                plt.plot(spec.wavelength, spec.noise, label="noise")
+                plt.yscale("log")
+                plt.legend()
+                plt.show()
         else:
             spec = self.hci_hrs_obs.obs_spec_resample.copy()
             spec.wavelength = self.hci_hrs_obs.obs_spec_resample.wavelength
@@ -303,7 +304,7 @@ class HCI_HRS_Reduction():
         flx_st_atm_norm = flx_st_atm / np.median(flx_st_atm)
         obs_st_at_removed = self.hci_hrs_obs.obs_st_resample.copy()
         obs_st_at_removed.wavelength = wav_obs
-        if self.hci_hrs_obs.atmosphere != None:
+        if self.hci_hrs_obs.atmosphere is not None:
             self.hci_hrs_obs.obs_st_resample.flux *= self.hci_hrs_obs.instrument.pl_st_contrast # obs_st_resample is now attenuated by coronagraph
             noise = np.sqrt(self.obs_emission_removed.noise**2 + self.hci_hrs_obs.calNoise(self.hci_hrs_obs.obs_st_resample)**2)
             atm_tran = self.hci_hrs_obs.obs_atm_tran_resample.copy()

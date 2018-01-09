@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import pickle
 import scipy.constants
 import astropy.io.fits as pyfits
 from astropy import units as u

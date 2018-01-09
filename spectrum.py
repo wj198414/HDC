@@ -17,7 +17,7 @@ class Spectrum():
         self.noise = None
 
     def addNoise(self, noise):
-        if self.noise == None:
+        if self.noise is None:
             self.noise = noise
         else:
             print("Warning: spectrum noise already added")
@@ -63,7 +63,7 @@ class Spectrum():
         idx = np.argsort(np.hstack((self.wavelength, spec.wavelength)))
         spec_new.wavelength = np.hstack((self.wavelength, spec.wavelength))[idx]
         spec_new.flux = np.hstack((self.flux, spec.flux))[idx]
-        if spec_new.noise != None:
+        if spec_new.noise is not None:
             print("Combining spectrum may cause trouble for attribute Noise")
         return(spec_new)
 
@@ -72,7 +72,7 @@ class Spectrum():
         idx = np.where((self.wavelength <= wav_max) & (self.wavelength > wav_min))
         spec_new.wavelength = self.wavelength[idx]
         spec_new.flux = self.flux[idx]
-        if spec_new.noise != None:
+        if spec_new.noise is not None:
             spec_new.noise = self.noise[idx]
         return(spec_new)
 
@@ -154,7 +154,7 @@ class Spectrum():
     def copy(self):
         # make a copy of a spectrum object
         spectrum_new = Spectrum(self.wavelength.copy(), self.flux.copy(), spec_reso=self.spec_reso+0.0)
-        if self.noise != None:
+        if self.noise is not None:
             spectrum_new.noise = self.noise.copy()
         return(spectrum_new)
 
@@ -213,7 +213,7 @@ class Spectrum():
             flx_temp = np.interp(wav, wav_temp, flx_temp)
             flx = flx - np.nanmedian(flx)
             flx_temp = flx_temp - np.nanmedian(flx_temp)
-            if spec_mask != None:
+            if spec_mask is not None:
                 flx[spec_mask] = np.nanmedian(flx)
                 flx_temp[spec_mask] = np.nanmedian(flx_temp)
 

@@ -68,7 +68,7 @@ class HCI_HRS_Observation():
         #Calculate exozodi background (add later)
       
         # Considering Earth's atmosphere, e.g., ground-based observation
-        if self.atmosphere != None:
+        if self.atmosphere is not None:
             # get the transmission spectrum 
             spec_atm_tran = self.getSpecChunk(self.atmosphere.spec_tran_wav, self.atmosphere.spec_tran_flx)
             self.atm_tran_spec_chunk = Spectrum(spec_atm_tran["Wavelength"], spec_atm_tran["Flux"], spec_reso=self.star.spec_reso)
@@ -161,18 +161,18 @@ class HCI_HRS_Observation():
             # construct final spectrum with pl_st and radi
             self.obs_spec_resample = Spectrum(self.atm_radi_spec_chunk_resample.wavelength, self.atm_radi_spec_chunk_resample.flux + self.obs_pl_st_resample.flux + self.obs_zodi_resample.flux + self.obs_therm_resample.flux, spec_reso=self.star.spec_reso)
 
-            if 1 == 0:
-		plt.figure()
-		plt.plot(self.obs_st_resample.wavelength, self.obs_st_resample.flux*self.instrument.pl_st_contrast, color="b", label="star+atm")
-		plt.plot(self.obs_pl_resample.wavelength, self.obs_pl_resample.flux, color="orange", label="planet")
-		plt.plot(self.obs_therm_resample.wavelength, self.obs_therm_resample.flux, color="g", label="thermal")
-		plt.plot(self.obs_zodi_resample.wavelength, self.obs_zodi_resample.flux, color="r", label="zodi")
-                plt.plot(self.obs_spec_resample.wavelength, self.obs_spec_resample.flux, color="yellow", label="obs")
-                plt.plot(self.atm_radi_spec_chunk_resample.wavelength, self.atm_radi_spec_chunk_resample.flux, color="black", label="sky")
-                plt.plot(self.obs_atm_tran_resample.wavelength, self.obs_atm_tran_resample.flux, label="tran")
-                plt.yscale("log")
-                plt.legend()
-		plt.show(block=True)
+
+            plt.figure()
+            plt.plot(self.obs_st_resample.wavelength, self.obs_st_resample.flux*self.instrument.pl_st_contrast, color="b", label="star+atm")
+            plt.plot(self.obs_pl_resample.wavelength, self.obs_pl_resample.flux, color="orange", label="planet")
+            plt.plot(self.obs_therm_resample.wavelength, self.obs_therm_resample.flux, color="g", label="thermal")
+            plt.plot(self.obs_zodi_resample.wavelength, self.obs_zodi_resample.flux, color="r", label="zodi")
+            plt.plot(self.obs_spec_resample.wavelength, self.obs_spec_resample.flux, color="yellow", label="obs")
+            plt.plot(self.atm_radi_spec_chunk_resample.wavelength, self.atm_radi_spec_chunk_resample.flux, color="black", label="sky")
+            plt.plot(self.obs_atm_tran_resample.wavelength, self.obs_atm_tran_resample.flux, label="tran")
+            plt.yscale("log")
+            plt.legend()
+            plt.show(block=True)
 
             # calculate noise for obs_spec_resample, atm_radi_spec_chunk_resample, and obs_st_resample
             noise = self.calNoise(self.obs_spec_resample)
@@ -231,13 +231,12 @@ class HCI_HRS_Observation():
             self.obs_zodi_resample = self.obs_zodi.resampleSpectoSpectrograph(pixel_sampling=self.instrument.pixel_sampling)
             self.obs_zodi_resample.scaleSpec(total_flux=self.zodi_total_flux)
 
-            if 1 == 0:
-		plt.figure()
-		plt.plot(self.obs_st_resample.wavelength, self.obs_st_resample.flux*self.instrument.pl_st_contrast, "b")
-		plt.plot(self.obs_pl_resample.wavelength, self.obs_pl_resample.flux, "orange")
-		plt.plot(self.obs_therm_resample.wavelength, self.obs_therm_resample.flux, "g")
-		plt.plot(self.obs_zodi_resample.wavelength, self.obs_zodi_resample.flux, "r")
-		plt.show(block=False)
+            plt.figure()
+            plt.plot(self.obs_st_resample.wavelength, self.obs_st_resample.flux*self.instrument.pl_st_contrast, "b")
+            plt.plot(self.obs_pl_resample.wavelength, self.obs_pl_resample.flux, "orange")
+            plt.plot(self.obs_therm_resample.wavelength, self.obs_therm_resample.flux, "g")
+            plt.plot(self.obs_zodi_resample.wavelength, self.obs_zodi_resample.flux, "r")
+            plt.show(block=False)
 
             # construct spectrum with planet, star, and thermal background 
             # obs = (planet + star * contrast + thermbg) 
