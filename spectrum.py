@@ -137,21 +137,51 @@ class Spectrum():
 
         return(self)
 
-    def applyHighPassFilter(self, order = 5, cutoff = 100.0, pass_type="high"):
-        # cutoff is number of sampling per 1 micron, so 100 means 0.01 micron resolution, about R = 100 at 1 micron
-        x = self.wavelength
-        y = self.flux
-        n = self.noise
-        fs = 1.0 / np.median(x[1:-1] - x[0:-2])
-        nyq = 0.5 * fs
-        normal_cutoff = cutoff / nyq
-        #print("normal_cutoff = ", normal_cutoff)
-        b, a = scipy.signal.butter(order, normal_cutoff, btype=pass_type, analog=False)
-        yy = scipy.signal.filtfilt(b, a, y)
-        spec = Spectrum(x, yy, spec_reso=self.spec_reso)
-        if n is not None:
-            spec.addNoise(n)
-        return(spec)
+    def applyHighPassFilter(self, order = 5, cutoff = 100.0, pass_type="high", fourier_flag=True, plot_flag=False):
+        if not fourier_flag:
+            # cutoff is number of sampling per 1 micron, so 100 means 0.01 micron resolution, about R = 100 at 1 micron
+            x = self.wavelength
+            y = self.flux
+            n = self.noise
+            fs = 1.0 / np.median(x[1:-1] - x[0:-2])
+            nyq = 0.5 * fs
+            normal_cutoff = cutoff / nyq
+            #print("normal_cutoff = ", normal_cutoff)
+            b, a = scipy.signal.butter(order, normal_cutoff, btype=pass_type, analog=False)
+            yy = scipy.signal.filtfilt(b, a, y)
+            spec = Spectrum(x, yy, spec_reso=self.spec_reso)
+            if n is not None:
+                spec.addNoise(n)
+            return(spec)
+        else:
+            x = self.wavelength
+            y = self.flux
+            n = self.noise
+            fy = fp.fft(y)
+            fy = fp.fftshift(fy)
+            delta_x = np.median(np.abs(np.diff(x)))
+            N = len(x)
+            fx = np.linspace(-0.5 / delta_x, 0.5 / delta_x - 0.5 / delta_x / N, num=N)
+            if plot_flag:
+                plt.plot(fx, np.abs(fy))
+                plt.yscale("log")
+            delta_x = np.median(np.abs(np.diff(x)))
+            if pass_type == "high":
+                filter_envelope = 1.0 - 1.0 * np.exp(-1.0 * fx**2 / (2.0 * cutoff**2))
+            else:
+                filter_envelope = 1.0 * np.exp(-1.0 * fx**2 / (2.0 * cutoff**2))
+            if plot_flag:
+                plt.plot(fx, filter_envelope * np.max(fy))
+                plt.show()
+            ffy = fp.ifft(fp.ifftshift(fy* filter_envelope))
+            if plot_flag:
+                plt.plot(x,y)
+                plt.plot(x, ffy)
+                plt.show()
+            spec = Spectrum(x, ffy, spec_reso=self.spec_reso)
+            if n is not None:
+                spec.addNoise(n)
+            return(spec)
 
     def copy(self):
         # make a copy of a spectrum object
@@ -235,8 +265,8 @@ class Spectrum():
                 wav = wav_new
 
             if flag_plot:
-                plt.plot(wav, flx)
-                plt.plot(wav, flx_temp)
+                plt.plot(wav, flx / (np.max(flx) - np.min(flx)))
+                plt.plot(wav, flx_temp / (np.max(flx_temp) - np.min(flx_temp)))
                 plt.show()
 
             cc = fp.ifft(fp.fft(flx_temp)*np.conj(fp.fft(flx)))

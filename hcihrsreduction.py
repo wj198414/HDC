@@ -4,6 +4,7 @@ import scipy.constants
 import scipy.stats
 from datetime import datetime
 from crosscorrelationfunction import CrossCorrelationFunction
+from spectrum import Spectrum
 
 class HCI_HRS_Reduction():
     def __init__(self, hci_hrs_obs, template, save_flag=False, obj_tag="a", template_tag="b", speckle_flag=False, resolution_elements_in_ccf=5e2):
@@ -28,6 +29,7 @@ class HCI_HRS_Reduction():
         #self.template.rotational_blur(rot_vel=self.hci_hrs_obs.planet.rotation_vel)
         self.template.spectral_blur(rpower=self.template.spec_reso, quick_blur=False)
         self.template_resample = self.template.resampleSpectoSpectrograph(pixel_sampling=self.hci_hrs_obs.instrument.pixel_sampling)
+        #self.template_resample.writeSpec(file_name="template_resample.txt")
         self.template_R1000 = self.template_R1000.resampleSpec(self.template_resample.wavelength)
         if self.hci_hrs_obs.atmosphere != None:
             # remove sky emission with spectrum obteined from the sky fiber
@@ -84,10 +86,10 @@ class HCI_HRS_Reduction():
             if self.speckle_flag:
                 #self.cutoff_value = np.min([self.hci_hrs_obs.instrument.spec_reso / 6.0, 100.0])
                 self.cutoff_value = 100.0
-                if self.cutoff_value < self.hci_hrs_obs.instrument.spec_reso:
-                    self.cutoff_value = self.cutoff_value 
-                else:
-                    self.cutoff_value = self.hci_hrs_obs.instrument.spec_reso / 2.0
+                #if self.cutoff_value < self.hci_hrs_obs.instrument.spec_reso:
+                #    self.cutoff_value = self.cutoff_value 
+                #else:
+                #    self.cutoff_value = self.hci_hrs_obs.instrument.spec_reso / 2.0
                 self.template_resample = self.template_resample.applyHighPassFilter(cutoff=self.cutoff_value)
                 self.ccf_noise_less = self.obs_st_at_removed.applyHighPassFilter(cutoff=self.cutoff_value).crossCorrelation(self.template_resample, spec_mask=mask_arr, long_array=False, speed_flag=False)
             else:
@@ -95,7 +97,7 @@ class HCI_HRS_Reduction():
             vel_pixel = scipy.constants.c / self.hci_hrs_obs.instrument.spec_reso / self.hci_hrs_obs.instrument.pixel_sampling
             self.ccf_noise_less = self.ccf_noise_less.getCCFchunk(vmin=-self.resolution_elements_in_ccf*vel_pixel+self.hci_hrs_obs.planet.radial_vel, vmax=self.resolution_elements_in_ccf*vel_pixel+self.hci_hrs_obs.planet.radial_vel)
             self.ccf_peak = self.ccf_noise_less.calcPeak()
-            result = self.simulateSingleMeasurement(ground_flag=False, plot_flag=False, speckle_flag=self.speckle_flag, spec_mask=mask_arr, long_array=False, speed_flag=False)
+            result = self.simulateSingleMeasurement(ground_flag=False, plot_flag=False, speckle_flag=self.speckle_flag, spec_mask=mask_arr, long_array=False, speed_flag=False, flag_plot=False)
             print(result)
             self.writeLog(result)
             #result = self.simulateMultiMeasurement_2(num_sim=100, ground_flag=False, speckle_flag=self.speckle_flag, spec_mask=mask_arr, long_array=False, speed_flag=False)
@@ -154,7 +156,7 @@ class HCI_HRS_Reduction():
             if speckle_flag:
                 spec = self.obs_st_at_removed.generateNoisySpec(speckle_noise=True, star_flux=np.median(self.hci_hrs_obs.obs_st_resample.flux)) 
                 spec = spec.applyHighPassFilter(cutoff=self.cutoff_value) # self.hci_hrs_obs.obs_st_resample is after starlight suppression
-                spec = spec.applyHighPassFilter(cutoff=self.hci_hrs_obs.instrument.spec_reso*0.5, pass_type='low')
+                spec = spec.applyHighPassFilter(cutoff=self.hci_hrs_obs.instrument.spec_reso*1.0, pass_type='low')
                 ccf = spec.crossCorrelation(self.template_resample, **kwargs)
             else:
                 spec = self.obs_st_at_removed.generateNoisySpec(speckle_noise=False)
@@ -165,7 +167,7 @@ class HCI_HRS_Reduction():
                 plt.plot(self.template_high_pass.wavelength, self.template_high_pass.flux / np.max(self.template_high_pass.flux) , alpha=0.5, label="temp")
             else:
                 plt.plot(self.template_resample.wavelength, self.template_resample.flux / np.max(self.template_resample.flux) , alpha=0.5, label="temp")
-            plt.plot(spec.wavelength, spec.flux, alpha=0.5, label="obs high pass noise")
+            #plt.plot(spec.wavelength, spec.flux, alpha=0.5, label="obs high pass noise")
             plt.legend()
             plt.show()
         vel_pixel = scipy.constants.c / self.hci_hrs_obs.instrument.spec_reso / self.hci_hrs_obs.instrument.pixel_sampling
