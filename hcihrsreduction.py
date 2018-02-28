@@ -66,10 +66,11 @@ class HCI_HRS_Reduction():
             self.obs_st_at_removed.flux = self.obs_st_at_removed.flux / obs_norm
             self.obs_st_at_removed.noise = self.obs_st_at_removed.noise / obs_norm
             if 1 == 0:
+                plt.figure()
                 plt.plot(self.hci_hrs_obs.obs_st_resample.flux, label="st")
                 plt.plot(self.obs_st_at_removed.flux, label="after")
                 plt.legend()
-                plt.show()  
+                plt.show(block=False)  
             mask_arr = np.where((self.template_R1000.flux / np.nanmedian(self.template_R1000.flux)) > 0.99)
             #mask_arr = np.where((self.template_resample.flux / np.nanmedian(self.template_resample.flux)) > 1e9)
             if 1 == 0:
@@ -79,7 +80,7 @@ class HCI_HRS_Reduction():
 		#plt.plot(self.template_resample.wavelength, self.template_resample.flux / np.median(self.template_resample.flux))
 		#plt.plot(self.template_resample.wavelength[mask_arr], self.template_resample.flux[mask_arr] / np.median(self.template_resample.flux[mask_arr]))
 		plt.plot(self.obs_st_at_removed.wavelength[mask_arr], self.obs_st_at_removed.flux[mask_arr], "r.")
-		plt.show(block=True)
+		plt.show(block=False)
             if self.speckle_flag:
                 #self.cutoff_value = np.min([self.hci_hrs_obs.instrument.spec_reso / 6.0, 100.0])
                 self.cutoff_value = 100.0
@@ -166,7 +167,7 @@ class HCI_HRS_Reduction():
                 plt.plot(self.template_resample.wavelength, self.template_resample.flux / np.max(self.template_resample.flux) , alpha=0.5, label="temp")
             plt.plot(spec.wavelength, spec.flux, alpha=0.5, label="obs high pass noise")
             plt.legend()
-            plt.show()
+            plt.show(block=False)
         vel_pixel = scipy.constants.c / self.hci_hrs_obs.instrument.spec_reso / self.hci_hrs_obs.instrument.pixel_sampling
         ccf = ccf.getCCFchunk(vmin=-self.resolution_elements_in_ccf*vel_pixel+self.hci_hrs_obs.planet.radial_vel, vmax=self.resolution_elements_in_ccf*vel_pixel+self.hci_hrs_obs.planet.radial_vel)
 
@@ -185,10 +186,11 @@ class HCI_HRS_Reduction():
         #ccf.ccf[ind-pix_search:ind+pix_search+1] = ccf_orig.ccf[ind-pix_search:ind+pix_search+1]
 
         if plot_flag:
+            plt.figure()
             plt.plot(ccf.vel, ccf.ccf, "bo-", alpha=0.5)
             plt.plot(self.ccf_noise_less.vel, self.ccf_noise_less.ccf, "ro-", alpha=0.5)
             plt.plot(ccf.vel, ccf.ccf - self.ccf_noise_less.ccf, "go-", alpha=0.5)
-            plt.show()
+            plt.show(block=False)
 
         #snr_rms = ccf.calcSNRrms(peak=peak)
         snr_rms = ccf.calcSNRrmsNoiseless(self.ccf_noise_less, peak=peak)
@@ -212,6 +214,7 @@ class HCI_HRS_Reduction():
             SNR_RMS_std = 0.0
             SNR = np.transpose(info_arr[0,idx]).flatten()
             if flag_plot:
+                plt.figure()
                 plt.hist(SNR, alpha=0.3, label="R ={0:4.0f}".format(self.hci_hrs_obs.instrument.spec_reso))
                 plt.show()
             SNR_vs_NoiseLess_mean = np.sort(SNR)[int(0.32*len(SNR))]
@@ -246,9 +249,10 @@ class HCI_HRS_Reduction():
             CCF_peak_mean = np.median(info_arr[1,idx])
             CCF_peak_std = np.std(np.sort(np.transpose(info_arr[1,idx]))[2:-2])
             n, bins = np.histogram(np.transpose(info_arr[1,idx]), bins=np.linspace(0, np.max(info_arr[1,idx]), 10))
+            #plt.figure()
             #plt.plot(bins[0:-1], n, "b")
             #plt.plot([self.ccf_peak, self.ccf_peak], [0,num_sim/2.0],"r--")
-            #plt.show()
+            #plt.show(block=False)
             if (n[0] == 0.0) & (np.sort(np.transpose(info_arr[1,idx]))[int(np.floor((num_sim-1.0)*0.15))] < self.ccf_peak):
                 SNR_vs_NoiseLess_mean = CCF_peak_mean / CCF_peak_std
             else:
@@ -271,6 +275,7 @@ class HCI_HRS_Reduction():
             spec.noise = None
             spec.addNoise(np.sqrt(self.hci_hrs_obs.obs_spec_resample.noise**2 + self.hci_hrs_obs.atm_radi_spec_chunk_resample.noise**2 + self.hci_hrs_obs.obs_therm_resample.noise**2))
             if flag_plot:
+                plt.figure()
                 plt.plot(self.hci_hrs_obs.obs_spec_resample.wavelength, self.hci_hrs_obs.obs_spec_resample.flux, label="obs")
                 plt.plot(self.hci_hrs_obs.atm_radi_spec_chunk_resample.wavelength, self.hci_hrs_obs.atm_radi_spec_chunk_resample.flux, label="sky")
                 plt.plot(self.hci_hrs_obs.obs_therm_resample.wavelength, self.hci_hrs_obs.obs_therm_resample.flux, label="therm")
@@ -278,7 +283,7 @@ class HCI_HRS_Reduction():
                 plt.plot(spec.wavelength, spec.noise, label="noise")
                 plt.yscale("log")
                 plt.legend()
-                plt.show()
+                plt.show(block=False)
         else:
             spec = self.hci_hrs_obs.obs_spec_resample.copy()
             spec.wavelength = self.hci_hrs_obs.obs_spec_resample.wavelength
@@ -286,13 +291,14 @@ class HCI_HRS_Reduction():
             spec.noise = None
             spec.addNoise(np.sqrt(self.hci_hrs_obs.obs_spec_resample.noise**2 + self.hci_hrs_obs.obs_therm_resample.noise**2))
             if flag_plot:
+                plt.figure()
                 plt.plot(self.hci_hrs_obs.obs_spec_resample.wavelength, self.hci_hrs_obs.obs_spec_resample.flux, label="obs")
                 plt.plot(self.hci_hrs_obs.obs_therm_resample.wavelength, self.hci_hrs_obs.obs_therm_resample.flux, label="therm")
                 plt.plot(spec.wavelength, spec.flux, label="after")
                 plt.plot(spec.wavelength, spec.noise, label="noise")
                 plt.yscale("log")
                 plt.legend()
-                plt.show()
+                plt.show(block=False)
         return(spec)
 
     #Noise model and final observed spectrum made more realistic.  Can't easily remove thermal+zodi backgrounds!
@@ -325,6 +331,7 @@ class HCI_HRS_Reduction():
             obs_st_at_removed.noise = None
             obs_st_at_removed.addNoise(np.abs(noise))
         if flag_plot:
+            plt.figure()
             plt.plot(self.obs_emission_removed.wavelength, self.obs_emission_removed.flux, label="before")
             plt.plot(self.hci_hrs_obs.obs_pl_resample.wavelength, self.hci_hrs_obs.obs_pl_resample.flux, label="pl")
             plt.plot(self.hci_hrs_obs.obs_st_resample.wavelength, self.hci_hrs_obs.obs_st_resample.flux, label="st+atm")
@@ -336,7 +343,7 @@ class HCI_HRS_Reduction():
             #plt.plot(self.hci_hrs_obs.obs_st_resample.wavelength, self.obs_emission_removed.flux / atm_tran.flux, label="pl+st w/o atm")
             plt.yscale("log")
             plt.legend()
-            plt.show()
+            plt.show(block=False)
         return(obs_st_at_removed)
 
     def plotObsTemplate(self, plotSkyStAtmRemoved=True, plotTemplate=True, plotStAtm=True, plotObs=False, plotObsSkyRemoved=True):

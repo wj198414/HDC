@@ -1,5 +1,14 @@
 hci_hrs_sim.py changelog
 
+2/28/18
+
+Carl Coker
+
+-Changed figure commands so that they now properly spawn new figures
+	and don't block execution.
+-Began implementing supersampling routine for exozodi.  More interp-
+	olation issues need to be addressed as well.
+
 11/16/17
 
 Ji Wang

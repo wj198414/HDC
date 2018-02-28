@@ -3,8 +3,10 @@ import astropy.io.fits as pyfits
 import astropy.units as u
 import os
 from spectrum import Spectrum
+from scipy import interpolate
 
-#This class carries the exozodiacal background for the observation.  The relevant portions of the interface are the same as for Target().
+#This class carries the exozodiacal background for the observation.  The relevant portions 
+#of the interface are the same as for Target().
 
 class ZodiTarget():
     def __init__(self, instrument, distance=10.0, spec_path=None, exozodi_level=1.0, spec_reso=1e5):
@@ -58,7 +60,18 @@ class ZodiTarget():
             #print pix_rad
             #Sum up the zodi inside the planet PSF at each wavelength
             for i in range(N_EXT):
-                zodi_per_pix.append(np.sum(haystacks[i+1].data[circle < pix_rad[i]**2.]))
+                scale_factor = 2 #Supersampling scale factor
+                #Spawn interpolator for each wavelength
+                #Evaluate within upsacled PSF region
+                #Sum
+                #Divide by scale_factor**2 to correct for the extra "pixels" in the sum
+
+                yy_sup, xx_sup = (np.mgrid[:scale_factor*yy.shape[0], :scale_factor*xx.shape[0]])/np.float(scale_factor)
+                supersample_grid = interpolate.griddata((yy.ravel(), xx.ravel()), haystacks[i+1].data.ravel(), 
+                                                        (yy_sup.ravel(), xx_sup.ravel()), method="linear")
+                print supersample_grid.shape
+                #zodi_per_pix.append(np.sum(haystacks[i+1].data[circle < pix_rad[i]**2.]))
+                zodi_per_pix.append(np.sum(supersample_grid[circle < (scale_factor*pix_rad[i])**2.])/scale_factor**2.)
 
         #Scale the exozodi brightness to the proper distance and total exozodi level; 
         #the Haystacks model is the Solar System at 10 pc
