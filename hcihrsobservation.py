@@ -51,15 +51,21 @@ class HCI_HRS_Observation():
         self.therm_spec_chunk = self.removeNanInSpecChunk(self.therm_spec_chunk)
         self.therm_spec_chunk.evenSampling() #Does this actually badly affect the total flux?
         self.therm_spec_chunk.flux = self.thermToPhoton(self.therm_spec_chunk.wavelength, self.therm_spec_chunk.flux, self.t_exp)
+        #self.therm_spec_chunk.flux = self.therm_spec_chunk.flux[1:]*1e30
         self.therm_spec_chunk.wavelength = self.therm_spec_chunk.wavelength[1:]
         self.therm_total_flux = self.getTotalFlux(self.therm_spec_chunk.flux)
         self.therm_spec_chunk.resampleSpec(self.star_spec_chunk.wavelength)
+
+        plt.figure()
+        plt.plot(self.therm_spec_chunk.wavelength, self.therm_spec_chunk.flux)
+        plt.show(block=False)
         
         #Get exozodiacal spectrum within wavelength range, calculate total zodi flux, and resample to stellar wavelength scale
 
         spec_zodi = self.getSpecChunk(self.zodi.wavelength, self.zodi.flux)
         self.zodi_spec_chunk = Spectrum(spec_zodi["Wavelength"], spec_zodi["Flux"], spec_reso=self.zodi.spec_reso)
         self.zodi_spec_chunk = self.removeNanInSpecChunk(self.zodi_spec_chunk)
+        self.zodi_spec_chunk.evenSampling()
         self.zodi_spec_chunk.flux = self.zodiToPhoton(self.zodi_spec_chunk.wavelength, self.zodi_spec_chunk.flux, self.instrument.telescope_size, self.instrument.throughput, self.t_exp)
         self.zodi_spec_chunk.wavelength = self.zodi_spec_chunk.wavelength[1:]
         self.zodi_total_flux = self.getTotalFlux(self.zodi_spec_chunk.flux)
@@ -354,6 +360,8 @@ class HCI_HRS_Observation():
         t_exp_u = t_exp*u.s
 
         photon_energy_u = (c.c*c.h/wav_u).decompose()
+
+        #Need to use a more sophisticated integrator here, I think.
 
         flx_u_photon = (flx_u[1:] * np.pi * (tel_size_u/2.)**2 * (c.c/wav_u[1:]**2) * wav_u_inc * eta_ins * t_exp_u / photon_energy_u[1:]).decompose()
 

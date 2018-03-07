@@ -3,7 +3,6 @@ import astropy.io.fits as pyfits
 import astropy.units as u
 import os
 from spectrum import Spectrum
-from scipy import interpolate
 
 #This class carries the exozodiacal background for the observation.  The relevant portions 
 #of the interface are the same as for Target().
@@ -35,13 +34,6 @@ class ZodiTarget():
 
         wavel = []
         zodi_per_pix = []
-
-        #haystacks_tmp = pyfits.open(self.spec_path+"/"+os.listdir(self.spec_path)[0])
-        
-        #yy, xx = np.mgrid[:haystacks_tmp[1].data.shape[0], :haystacks_tmp[1].data.shape[1]]
-        #circle = (xx - planetcen[1])**2. + (yy - planetcen[0])**2.
-        
-        #haystacks_tmp.close()
         
         for zodicube in sorted(os.listdir(self.spec_path)):
             
@@ -55,23 +47,36 @@ class ZodiTarget():
         
             #Make a circular aperture corresponding to a lambda/D sized planet PSF
             pix_rad = np.array((wavel_temp*u.um*self.distance*u.pc/(self.instrument.telescope_size*u.m*pixel_scale)).decompose()/2)
-            yy, xx = np.mgrid[:haystacks[1].data.shape[0], :haystacks[1].data.shape[1]]
-            circle = (xx - planetcen[1])**2. + (yy - planetcen[0])**2.
-            #print pix_rad
+
             #Sum up the zodi inside the planet PSF at each wavelength
             for i in range(N_EXT):
+
+                '''#Supersampling algorithm
                 scale_factor = 2 #Supersampling scale factor
                 #Spawn interpolator for each wavelength
                 #Evaluate within upsacled PSF region
                 #Sum
                 #Divide by scale_factor**2 to correct for the extra "pixels" in the sum
 
-                yy_sup, xx_sup = (np.mgrid[:scale_factor*yy.shape[0], :scale_factor*xx.shape[0]])/np.float(scale_factor)
-                supersample_grid = interpolate.griddata((yy.ravel(), xx.ravel()), haystacks[i+1].data.ravel(), 
-                                                        (yy_sup.ravel(), xx_sup.ravel()), method="linear")
-                print supersample_grid.shape
+                yy_sup, xx_sup = (np.mgrid[:scale_factor*haystacks[i+1].data.shape[0]-1, 
+                                           :scale_factor*haystacks[i+1].data.shape[1]-1])/np.float(scale_factor)
+                circle = (xx_sup - planetcen[1])**2. + (yy_sup - planetcen[0])**2.
+                y = np.arange(0, haystacks[i+1].data.shape[0])
+                x = np.arange(0, haystacks[i+1].data.shape[1])
+
+                supersampling_interpolation_function = RegularGridInterpolator((y, x), haystacks[i+1].data)        
+                supersample_grid = supersampling_interpolation_function(np.column_stack((yy_sup.ravel(), xx_sup.ravel())))
+                supersample_grid = np.reshape(supersample_grid, (int(sqrt(len(supersample_grid))), 
+                                                                 int(sqrt(len(supersample_grid)))))
+
                 #zodi_per_pix.append(np.sum(haystacks[i+1].data[circle < pix_rad[i]**2.]))
                 zodi_per_pix.append(np.sum(supersample_grid[circle < (scale_factor*pix_rad[i])**2.])/scale_factor**2.)
+                print supersample_grid.shape
+                '''
+
+                one_pix_flux = haystacks[i+1].data[planetcen[0], planetcen[1]]
+                PSF_flux = one_pix_flux*np.pi*pix_rad[i]**2.
+                zodi_per_pix.append(PSF_flux)
 
         #Scale the exozodi brightness to the proper distance and total exozodi level; 
         #the Haystacks model is the Solar System at 10 pc

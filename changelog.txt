@@ -1,5 +1,28 @@
 hci_hrs_sim.py changelog
 
+3/6/18
+
+Carl Coker
+
+-The wavelength sampling bug for the exozodi has been fixed (again).
+-Thermal background spectrum flat-topping bug traced to resampling
+	the spectrum.
+-
+
+3/5/18
+
+Carl Coker
+
+-Finished first pass at supersampling algorithm.  If I want it to
+	be faster, it looks like I'll have to write my own interp-
+	olator in numba or something.
+-However, instead of using supersampling, Stuart suggested just
+	scaling the flux in one pixel by the area of the PSF.
+	I don't think the PSF is ever large enough for this to
+	run afoul of major features in the zodi.
+-I have traced the weird behavior of the endpoints on the spectra
+	to spectral_blur.
+
 2/28/18
 
 Carl Coker

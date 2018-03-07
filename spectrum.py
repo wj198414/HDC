@@ -259,6 +259,7 @@ class Spectrum():
 
         return(CrossCorrelationFunction(vel, ccf))
 
+    #This function is causing the weird turn at the endpoints.  How to fix?
     def spectral_blur(self, rpower=1e5, quick_blur=False):
         # broaden a spectrum given its spectral resolving power
         if not quick_blur:
