@@ -27,7 +27,9 @@ class HCI_HRS_Reduction():
         #self.template.rotational_blur(rot_vel=self.hci_hrs_obs.planet.rotation_vel)
         self.template.spectral_blur(rpower=self.template.spec_reso, quick_blur=False)
         self.template_resample = self.template.resampleSpectoSpectrograph(pixel_sampling=self.hci_hrs_obs.instrument.pixel_sampling)
+        self.template_resample = self.hci_hrs_obs.specChopAfterBlur(self.template_resample)
         self.template_R1000 = self.template_R1000.resampleSpec(self.template_resample.wavelength)
+        self.template_R1000 = self.hci_hrs_obs.specChopAfterBlur(self.template_R1000)
         if self.hci_hrs_obs.atmosphere is not None:
             # remove sky emission with spectrum obteined from the sky fiber
             self.obs_emission_removed = self.removeSkyEmission(flag_plot=True)

@@ -1,5 +1,13 @@
 hci_hrs_sim.py changelog
 
+3/23/18
+
+Carl Coker
+
+-Fixed weird endpoints bug by chopping off 5 points at each end of
+    a spectrum.  Bug was unavoidable due to spectral blur algorithm.
+    My fix does not appear to materially affect the final CCF SNR.
+
 3/6/18
 
 Carl Coker
@@ -7,7 +15,6 @@ Carl Coker
 -The wavelength sampling bug for the exozodi has been fixed (again).
 -Thermal background spectrum flat-topping bug traced to resampling
 	the spectrum.
--
 
 3/5/18
 

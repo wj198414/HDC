@@ -51,7 +51,6 @@ class HCI_HRS_Observation():
         self.therm_spec_chunk = self.removeNanInSpecChunk(self.therm_spec_chunk)
         self.therm_spec_chunk.evenSampling() #Does this actually badly affect the total flux?
         self.therm_spec_chunk.flux = self.thermToPhoton(self.therm_spec_chunk.wavelength, self.therm_spec_chunk.flux, self.t_exp)
-        #self.therm_spec_chunk.flux = self.therm_spec_chunk.flux[1:]*1e30
         self.therm_spec_chunk.wavelength = self.therm_spec_chunk.wavelength[1:]
         self.therm_total_flux = self.getTotalFlux(self.therm_spec_chunk.flux)
         self.therm_spec_chunk.resampleSpec(self.star_spec_chunk.wavelength)
@@ -212,6 +211,7 @@ class HCI_HRS_Observation():
             self.obs_st = self.star_spec_chunk.copy()
             self.obs_st.spectral_blur(rpower=self.star.spec_reso, quick_blur=False)
             self.obs_st_resample = self.obs_st.resampleSpectoSpectrograph(pixel_sampling=self.instrument.pixel_sampling)
+            self.obs_st_resample = self.specChopAfterBlur(self.obs_st_resample)
             self.obs_st_resample.scaleSpec(total_flux=self.star_total_flux)
             
             # construct spectrum with planet only
@@ -221,6 +221,7 @@ class HCI_HRS_Observation():
             self.obs_pl = self.planet_spec_chunk.copy()
             self.obs_pl.spectral_blur(rpower=self.planet.spec_reso, quick_blur=False)
             self.obs_pl_resample = self.obs_pl.resampleSpectoSpectrograph(pixel_sampling=self.instrument.pixel_sampling)
+            self.obs_pl_resample = self.specChopAfterBlur(self.obs_pl_resample)
             self.obs_pl_resample.scaleSpec(total_flux=self.planet_total_flux)
             
             #Construct thermal background spectrum
@@ -230,11 +231,13 @@ class HCI_HRS_Observation():
             self.obs_therm = self.therm_spec_chunk.copy()
             self.obs_therm.spectral_blur(rpower=self.thermbg.spec_reso, quick_blur=False)
             self.obs_therm_resample = self.obs_therm.resampleSpectoSpectrograph(pixel_sampling=self.instrument.pixel_sampling)
+            self.obs_therm_resample = self.specChopAfterBlur(self.obs_therm_resample)
             self.obs_therm_resample.scaleSpec(total_flux=self.therm_total_flux)
         
             self.obs_zodi = self.zodi_spec_chunk.copy()
             self.obs_zodi.spectral_blur(rpower=self.zodi.spec_reso, quick_blur=False)
             self.obs_zodi_resample = self.obs_zodi.resampleSpectoSpectrograph(pixel_sampling=self.instrument.pixel_sampling)
+            self.obs_zodi_resample = self.specChopAfterBlur(self.obs_zodi_resample)
             self.obs_zodi_resample.scaleSpec(total_flux=self.zodi_total_flux)
 
             plt.figure()
@@ -368,4 +371,9 @@ class HCI_HRS_Observation():
         return(flx_u_photon)
 
     def getTotalFlux(self, flx_u_photon):
-        return(np.sum(flx_u_photon)) 
+        return(np.sum(flx_u_photon))
+        
+    def specChopAfterBlur(self, spectrum):
+        spectrum.wavelength = spectrum.wavelength[5:-5]
+        spectrum.flux = spectrum.flux[5:-5]
+        return spectrum
