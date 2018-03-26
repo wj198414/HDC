@@ -287,7 +287,7 @@ class HCI_HRS_Observation():
 
     def getSpecChunk(self, wav, flx):
         # get spectrum within wavelength range
-        idx = ((wav < self.wav_max) & (wav > self.wav_min))
+        idx = ((wav <= self.wav_max) & (wav >= self.wav_min))
         if np.size(wav[idx]) != 0 :
             return {'Wavelength':wav[idx],'Flux':flx[idx]}
         else:

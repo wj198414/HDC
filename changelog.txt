@@ -1,5 +1,16 @@
 hci_hrs_sim.py changelog
 
+3/26/18
+
+Carl Coker
+
+-Fixed thermal spectrum endpoint flattening.  Turned out to be
+	that the interpolator was working fine, it was just
+	that it couldn't extrapolate, and the endpoints of the
+	thermal background spectrum were getting cut off.
+	Changing getSpecChunk to include the wavelength endpoints
+	(i.e., >= and <= instead of > and <) fixed the problem.
+
 3/23/18
 
 Carl Coker

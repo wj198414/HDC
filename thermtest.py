@@ -30,6 +30,8 @@ wavelcol = pyfits.Column(name="Wavelength", array=gold_refrac_data[:,wavelidx], 
 fluxcol = pyfits.Column(name="Flux", array=therm_flux, format="E", unit="W / um")
 thermhdu = pyfits.BinTableHDU.from_columns([wavelcol, fluxcol])
 
+print gold_refrac_data[:,wavelidx]
+
 mpl.figure()
 mpl.plot(wavelcol.array, fluxcol.array)
 mpl.show(block=False)
