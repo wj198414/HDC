@@ -1,5 +1,12 @@
 hci_hrs_sim.py changelog
 
+4/17/18
+
+Carl Coker
+
+BUG:  When calculating speckle noise, wav_arr is not guaranteed
+	to include the endpoints!  The fuck!?
+
 3/26/18
 
 Carl Coker

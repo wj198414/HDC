@@ -93,6 +93,8 @@ class Spectrum():
         wav_arr = np.hstack((wav_arr, [wav[-1]]))
         flx_arr = np.hstack((flx_arr, [np.random.random(1)[0] + 1.0]))
         f = scipy.interpolate.interp1d(wav_arr, flx_arr, kind="cubic")
+        #print wav_arr  #This bug needs to be fixed.  There should be a guarantee that wav_arr will contain wav_new.
+        #print wav_new  #I shouldn't be able to break this just by changing the wavelength interval!
         flx_new = f(wav_new)
         idx = np.where(flx_new < 0.1)
         flx_new[idx] = 0.1
@@ -117,7 +119,8 @@ class Spectrum():
         spec.flux = flx_new
 
         if speckle_noise:
-            flx_speckle = self.simSpeckleNoise(np.min(spec.wavelength), np.max(spec.wavelength), 0.1, spec.wavelength)
+            #Temp fix for bug noted in simSpeckleNoise:  Make wav_int smaller.  That is just a temp solution, though.
+            flx_speckle = self.simSpeckleNoise(np.min(spec.wavelength), np.max(spec.wavelength), 0.05, spec.wavelength)
             #spec.flux = spec.flux * flx_speckle
             spec.flux = spec.flux + star_flux * flx_speckle
 
