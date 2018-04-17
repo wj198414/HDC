@@ -97,7 +97,7 @@ class HCI_HRS_Reduction():
             vel_pixel = scipy.constants.c / self.hci_hrs_obs.instrument.spec_reso / self.hci_hrs_obs.instrument.pixel_sampling
             self.ccf_noise_less = self.ccf_noise_less.getCCFchunk(vmin=-self.resolution_elements_in_ccf*vel_pixel+self.hci_hrs_obs.planet.radial_vel, vmax=self.resolution_elements_in_ccf*vel_pixel+self.hci_hrs_obs.planet.radial_vel)
             self.ccf_peak = self.ccf_noise_less.calcPeak()
-            result = self.simulateSingleMeasurement(ground_flag=False, plot_flag=True, speckle_flag=self.speckle_flag, spec_mask=mask_arr, long_array=False, speed_flag=False)
+            result = self.simulateSingleMeasurement(ground_flag=False, plot_flag=False, speckle_flag=self.speckle_flag, spec_mask=mask_arr, long_array=False, speed_flag=False)
             print(result)
             self.writeLog(result)
             #result = self.simulateMultiMeasurement_2(num_sim=100, ground_flag=False, speckle_flag=self.speckle_flag, spec_mask=mask_arr, long_array=False, speed_flag=False)
@@ -228,6 +228,7 @@ class HCI_HRS_Reduction():
             SNR_vs_NoiseLess_std = 0.0
         with open("multi_sim_log.dat", "a+") as f:
             f.write("{0:50s},{2:8.3e},{1:8.3e},{3:6.3f},{4:8.2e},{5:8.2e},{6:8.2e},{7:8.2e}\n".format(self.obj_tag, self.hci_hrs_obs.instrument.pl_st_contrast, self.hci_hrs_obs.instrument.spec_reso, peak_correction_rate, vel_pixel, np.sort(SNR)[int(0.05*len(SNR))], np.sort(SNR)[int(0.32*len(SNR))], np.sort(SNR)[int(0.50*len(SNR))]))
+        print("RMS SNR vs. noiseless", np.sort(SNR)[int(0.32*len(SNR))])
         return([peak_correction_rate, SNR_RMS_mean, SNR_RMS_std, SNR_vs_NoiseLess_mean, SNR_vs_NoiseLess_std])
 
     def simulateMultiMeasurement_2(self, num_sim=10, **kwargs):
