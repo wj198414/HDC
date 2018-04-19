@@ -14,7 +14,7 @@ import hci_hrs_sim
 #to do it, but this'll work.
 
 texp_grid = [36e4, 144e4]
-temperature_grid = np.linspace(200, 400, num=21)
+temperature_grid = np.linspace(100, 400, num=31)
 aperture_grid = [1., 2.4, 4., 6.5, 9., 12., 15.]
 
 #The simulation loop.  Order of operations is as follows:

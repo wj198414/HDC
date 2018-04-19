@@ -28,22 +28,22 @@ param_arr = []
 
 for aper in aperture_grid:
     for texp in texp_grid:
-        for T in temperature_grid:
+        for Z in exozodi_grid:
             
             #Rewrite the init file with the parameters of the day
 
-            with open("SunEarth_4m.init.new", "w") as newinitfile:
-                with open("SunEarth_4m.init", "r") as initfile:
+            with open("SunEarth_4m_exozodi.init.new", "w") as newinitfile:
+                with open("SunEarth_4m_exozodi.init", "r") as initfile:
                     for line in initfile:
                         if "telescope_size" in line:
                             line = "telescope_size:\t" + str(aper) + "\t# in m\n"
                         if "t_exp" in line:
                             line = "t_exp:\t" + str(texp) + "\t# in second\n"
-                        if "temperature" in line:
-                            line = "temperature:\t" +str(T) + "\t#temperature of the telescope in K\n"
+                        if "exozodi_level" in line:
+                            line = "exozodi_level:\t" +str(Z) + "\t#level of exozodi relative to the Solar System\n"
                         newinitfile.write(line)
-            remove("SunEarth_4m.init")
-            move("SunEarth_4m.init.new", "SunEarth_4m.init")
+            remove("SunEarth_4m_exozodi.init")
+            move("SunEarth_4m_exozodi.init.new", "SunEarth_4m_exozodi.init")
 
             #Run the simulation with the parameters of the day
 
@@ -54,8 +54,8 @@ for aper in aperture_grid:
             #with the PotD to an array
 
             sim_results = np.genfromtxt("multi_sim_log.dat", dtype=str, delimiter=",")
-            param_arr.append([aper, texp, T, float(sim_results[6])])
+            param_arr.append([aper, texp, Z, float(sim_results[6])])
 
 #Save param_arr to a file for later use
 
-np.savetxt("temperature_grid_results.dat", param_arr)
+np.savetxt("exozodi_grid_results.dat", param_arr)
