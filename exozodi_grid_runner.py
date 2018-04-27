@@ -14,7 +14,7 @@ import hci_hrs_sim
 #to do it, but this'll work.
 
 texp_grid = [36e4, 144e4]
-exozodi_grid = np.linspace(1, 30, num=30)
+exozodi_grid = np.linspace(0, 60, num=31)
 aperture_grid = [1., 2.4, 4., 6.5, 9., 12., 15.]
 
 #The simulation loop.  Order of operations is as follows:
@@ -32,8 +32,8 @@ for aper in aperture_grid:
             
             #Rewrite the init file with the parameters of the day
 
-            with open("SunEarth_4m_exozodi.init.new", "w") as newinitfile:
-                with open("SunEarth_4m_exozodi.init", "r") as initfile:
+            with open("SunEarth_4m.init.new", "w") as newinitfile:
+                with open("SunEarth_4m.init", "r") as initfile:
                     for line in initfile:
                         if "telescope_size" in line:
                             line = "telescope_size:\t" + str(aper) + "\t# in m\n"
@@ -42,8 +42,8 @@ for aper in aperture_grid:
                         if "exozodi_level" in line:
                             line = "exozodi_level:\t" +str(Z) + "\t#level of exozodi relative to the Solar System\n"
                         newinitfile.write(line)
-            remove("SunEarth_4m_exozodi.init")
-            move("SunEarth_4m_exozodi.init.new", "SunEarth_4m_exozodi.init")
+            remove("SunEarth_4m.init")
+            move("SunEarth_4m.init.new", "SunEarth_4m.init")
 
             #Run the simulation with the parameters of the day
 
