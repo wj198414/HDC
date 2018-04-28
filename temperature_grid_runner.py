@@ -26,6 +26,8 @@ aperture_grid = [1., 2.4, 4., 6.5, 9., 12., 15.]
 
 param_arr = []
 
+counter = 0
+
 for aper in aperture_grid:
     for texp in texp_grid:
         for T in temperature_grid:
@@ -55,6 +57,8 @@ for aper in aperture_grid:
 
             sim_results = np.genfromtxt("multi_sim_log.dat", dtype=str, delimiter=",")
             param_arr.append([aper, texp, T, float(sim_results[6])])
+            counter+=1
+            print counter
 
 #Save param_arr to a file for later use
 
