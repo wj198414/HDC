@@ -25,6 +25,7 @@ aperture_grid = np.array([6.5, 12.])
 
 param_arr = []
 
+#this change doesn't matter
 
 for R in spec_reso_grid:
     for texp in texp_grid:
