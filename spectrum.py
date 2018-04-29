@@ -91,6 +91,7 @@ class Spectrum():
             wav_arr = np.hstack((wav_arr, [wav_tmp, wav_mid[0]]))
             flx_arr = np.hstack((flx_arr, [flx_tmp, flx_mid[0]]))
         wav_arr = np.hstack((wav_arr, [wav[-1]]))
+        wav_arr[-1] = wav_new[-1] #This fixes it, sort of, but the algorithm should be changed!
         flx_arr = np.hstack((flx_arr, [np.random.random(1)[0] + 1.0]))
         f = scipy.interpolate.interp1d(wav_arr, flx_arr, kind="cubic")
         #print wav_arr  #This bug needs to be fixed.  There should be a guarantee that wav_arr will contain wav_new.
