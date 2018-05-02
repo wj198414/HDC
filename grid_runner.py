@@ -14,7 +14,7 @@ spec_reso_grid = np.array([200, 400, 800, 1600, 3200, 6400, 12800, 25600])
 texp_grid = np.array([3.6e5, 1.44e6])
 contrast_grid = np.logspace(-11.0, -8.0, num=19)
 zodi_grid = np.array([1., 5., 10., 20.])
-aperture_grid = np.array([6.5, 12.])
+aperture_grid = np.array([6.5])
 
 #The simulation loop.  Order of operations is as follows:
 #1.  Rewrite the init file using the parameters for that spot on the grid.
@@ -24,6 +24,7 @@ aperture_grid = np.array([6.5, 12.])
 #5.  Save the array to a file.
 
 param_arr = []
+counter=0
 
 #this change doesn't matter
 
@@ -62,6 +63,8 @@ for R in spec_reso_grid:
 
                     sim_results = np.genfromtxt("multi_sim_log.dat", dtype=str, delimiter=",")
                     param_arr.append([R, texp, C, Z, float(sim_results[6])])
+                    counter+=1
+                    print counter
 
 #Save param_arr to a file for later use
 
