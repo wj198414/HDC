@@ -62,7 +62,7 @@ for R in spec_reso_grid:
                     #with the PotD to an array
 
                     sim_results = np.genfromtxt("multi_sim_log.dat", dtype=str, delimiter=",")
-                    param_arr.append([R, texp, C, Z, float(sim_results[6])])
+                    param_arr.append([R, texp, C, Z, float(sim_results[4]), float(sim_results[5]), float(sim_results[6]), float(sim_results[7])])
                     counter+=1
                     print counter
 
