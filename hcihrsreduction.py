@@ -128,7 +128,7 @@ class HCI_HRS_Reduction():
         with open("log.dat", "a+") as f:
             f.write("{0:80s},{1:8.2e},{2:8.2e},{3:8.2e},{4:10.1f},{5:10.2f},{6:10.2f},{7:50s}\n".format(log_tag, self.hci_hrs_obs.planet.radial_vel, vel_pixel, result["Center"], vel_offset_in_pixel, result["SNR_RMS"], result["SNR_vs_NoiseLess"], time_tag))
 
-    def getStarNorm(self, spec, num_chunks=10.0, long_array=False):  #Another dumb bug with default values.  Hopefully this doesn't actually change things.
+    def getStarNorm(self, spec, num_chunks=20.0, long_array=False):  #Another dumb bug with default values.  Hopefully this doesn't actually change things.
         if not long_array:
             if int(len(spec) / num_chunks) % 2 != 0:
                 obs_norm = scipy.signal.medfilt(spec, kernel_size = int(len(spec) / num_chunks))

@@ -120,8 +120,7 @@ class Spectrum():
         spec.flux = flx_new
 
         if speckle_noise:
-            #Temp fix for bug noted in simSpeckleNoise:  Make wav_int smaller.  That is just a temp solution, though.
-            flx_speckle = self.simSpeckleNoise(np.min(spec.wavelength), np.max(spec.wavelength), 0.05, spec.wavelength)
+            flx_speckle = self.simSpeckleNoise(np.min(spec.wavelength), np.max(spec.wavelength), 0.1, spec.wavelength)
             #spec.flux = spec.flux * flx_speckle
             spec.flux = spec.flux + star_flux * flx_speckle
 

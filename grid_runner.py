@@ -14,7 +14,7 @@ spec_reso_grid = np.array([200, 400, 800, 1600, 3200, 6400, 12800, 25600])
 texp_grid = np.array([3.6e5, 1.44e6])
 contrast_grid = np.logspace(-11.0, -8.0, num=19)
 zodi_grid = np.array([1., 5., 10., 20.])
-aperture_grid = np.array([6.5])
+aperture_grid = np.array([12])
 
 #The simulation loop.  Order of operations is as follows:
 #1.  Rewrite the init file using the parameters for that spot on the grid.
